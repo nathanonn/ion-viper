@@ -1,0 +1,5 @@
+node_modules/
+dist/
+test-results/
+goals/*/test-artifacts/
+.DS_Store
