@@ -14,31 +14,31 @@
 
 Execute goals in order. Each goal depends on all previous goals being complete.
 
-| # | Folder | Name | Description | Depends On |
-|---|--------|------|-------------|------------|
-| 00 | `goals/00-foundation/` | Foundation | Verify scaffold boots, customize constants, confirm state bridge and menu-to-game transition. | None |
-| 01 | `goals/01-player-ship/` | Player Ship | Add a player ship at the bottom-center of the screen with WASD and arrow-key movement clamped to bounds. | 00 |
-| 02 | `goals/02-player-weapons/` | Player Weapons | Add a single upward-firing weapon with pooled bullets and fire-rate limiting. | 01 |
-| 03 | `goals/03-enemies/` | Enemies | Spawn enemies from the top, move them downward, and destroy them with player bullets. | 02 |
-| 04 | `goals/04-scoring-health/` | Scoring and Health | Add score rewards, player health, collision damage, invulnerability frames, and game over. | 03 |
-| 05 | `goals/05-hud/` | HUD | Add a parallel HUD scene for score, health, and wave information without blocking gameplay input. | 04 |
-| 06 | `goals/06-wave-system/` | Wave System | Replace endless enemy spawns with configured waves, difficulty escalation, and a win condition. | 05 |
-| 07 | `goals/07-polish/` | Polish | Replace placeholders with pixel art, add particles, screen shake, parallax background, sound effects, and music. | 06 |
+| #   | Folder                     | Name               | Description                                                                                                      | Depends On |
+| --- | -------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- | ---------- |
+| 00  | `goals/00-foundation/`     | Foundation         | Verify scaffold boots, customize constants, confirm state bridge and menu-to-game transition.                    | None       |
+| 01  | `goals/01-player-ship/`    | Player Ship        | Add a player ship at the bottom-center of the screen with WASD and arrow-key movement clamped to bounds.         | 00         |
+| 02  | `goals/02-player-weapons/` | Player Weapons     | Add a single upward-firing weapon with pooled bullets and fire-rate limiting.                                    | 01         |
+| 03  | `goals/03-enemies/`        | Enemies            | Spawn enemies from the top, move them downward, and destroy them with player bullets.                            | 02         |
+| 04  | `goals/04-scoring-health/` | Scoring and Health | Add score rewards, player health, collision damage, invulnerability frames, and game over.                       | 03         |
+| 05  | `goals/05-hud/`            | HUD                | Add a parallel HUD scene for score, health, and wave information without blocking gameplay input.                | 04         |
+| 06  | `goals/06-wave-system/`    | Wave System        | Replace endless enemy spawns with configured waves, difficulty escalation, and a win condition.                  | 05         |
+| 07  | `goals/07-polish/`         | Polish             | Replace placeholders with pixel art, add particles, screen shake, parallax background, sound effects, and music. | 06         |
 
 ## State Bridge Growth
 
 Fields accumulate in `window.__GAME_STATE__`. Never remove existing fields.
 
-| Goal | New Fields | Cumulative |
-|------|------------|------------|
-| 00 | `scene`, `ready` | scene, ready, score, gameOver |
-| 01 | `playerPosition: { x, y }`, `playerAlive` | scene, ready, score, gameOver, playerPosition, playerAlive |
-| 02 | `playerBullets: { activeCount }` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets |
-| 03 | `enemies: { activeCount, totalDestroyed }` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies |
-| 04 | `playerHealth` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth |
-| 05 | `hudVisible` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible |
-| 06 | `currentWave`, `waveCount`, `gameWon` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible, currentWave, waveCount, gameWon |
-| 07 | no new fields | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible, currentWave, waveCount, gameWon |
+| Goal | New Fields                                 | Cumulative                                                                                                                                    |
+| ---- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00   | `scene`, `ready`                           | scene, ready, score, gameOver                                                                                                                 |
+| 01   | `playerPosition: { x, y }`, `playerAlive`  | scene, ready, score, gameOver, playerPosition, playerAlive                                                                                    |
+| 02   | `playerBullets: { activeCount }`           | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets                                                                     |
+| 03   | `enemies: { activeCount, totalDestroyed }` | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies                                                            |
+| 04   | `playerHealth`                             | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth                                              |
+| 05   | `hudVisible`                               | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible                                  |
+| 06   | `currentWave`, `waveCount`, `gameWon`      | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible, currentWave, waveCount, gameWon |
+| 07   | no new fields                              | scene, ready, score, gameOver, playerPosition, playerAlive, playerBullets, enemies, playerHealth, hudVisible, currentWave, waveCount, gameWon |
 
 ## Key Acceptance Criteria Per Goal
 
@@ -123,7 +123,7 @@ Fields accumulate in `window.__GAME_STATE__`. Never remove existing fields.
 For each goal in sequence:
 
 ```text
-/goal Complete goals/00-foundation/GOAL.md. Use VERIFY.md as the verification contract. Update PROGRESS.md continuously. Treat uncertainty as incomplete.
+/goal Complete goals/00-foundation/GOAL.md. Use goals/00-foundation/VERIFY.md as the verification contract. Update goals/00-foundation/PROGRESS.md continuously. Treat uncertainty as incomplete.
 ```
 
 After each goal completes:
