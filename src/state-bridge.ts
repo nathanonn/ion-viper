@@ -59,6 +59,15 @@ export interface GameState {
     activeCharger: number;
     lastSpawnedType: string;
   };
+  // --- Goal 11 adds fields below this line ---
+  waveRandomization: {
+    enabled: boolean;
+    spawnCount: number;
+    uniqueSpawnLanes: number;
+    minimumRecentSpacing: number;
+    lastSpawnX: number;
+    previousSpawnX: number;
+  };
 }
 
 declare global {
@@ -139,6 +148,15 @@ export function updateGameState(game: Phaser.Game): void {
       activeShooter: 0,
       activeCharger: 0,
       lastSpawnedType: 'none',
+    },
+    // --- Goal 11 populates fields below this line ---
+    waveRandomization: game.registry.get('waveRandomization') ?? {
+      enabled: false,
+      spawnCount: 0,
+      uniqueSpawnLanes: 0,
+      minimumRecentSpacing: 0,
+      lastSpawnX: 0,
+      previousSpawnX: 0,
     },
   };
 

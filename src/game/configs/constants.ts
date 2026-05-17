@@ -152,6 +152,20 @@ export const ENEMY_SPAWNER = {
   SPAWN_X_POSITIONS: [GAME_WIDTH / 2, 160, 640, 280, 520],
 } as const;
 
+export const WAVE_RANDOMIZATION = {
+  ENABLED: true,
+  MIN_LANE_SPACING: 120,
+  RECENT_HISTORY_SIZE: 4,
+  DELAY_JITTER_RATIO: 0.12,
+  MIN_DELAY_MS: 420,
+  FIRST_SPAWN_X: GAME_WIDTH / 2,
+  ARCHETYPE_DELAY_MULTIPLIERS: {
+    basic: 1,
+    shooter: 1.12,
+    charger: 1.22,
+  },
+} as const;
+
 // --- Goal 04 adds constants below this line ---
 export const PLAYER_COMBAT = {
   STARTING_HEALTH: 3,

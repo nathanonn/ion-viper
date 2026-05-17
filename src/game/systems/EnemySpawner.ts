@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ENEMY_SPAWNER } from '../configs/constants';
 import { getEnemyTypeConfig, type EnemyType } from '../data/enemies';
 import { Enemy } from '../objects/Enemy';
+import type { WaveRandomizer } from './WaveRandomizer';
 
 export interface EnemySpawnOptions {
   type?: EnemyType;
@@ -39,7 +40,10 @@ export class EnemySpawner {
   private lastSpawnedType: string = 'none';
   private readonly clearCallbacks = new Map<Enemy, () => void>();
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly waveRandomizer?: WaveRandomizer
+  ) {
     this.enemies = scene.physics.add.group({
       classType: Enemy,
       maxSize: ENEMY_SPAWNER.MAX_ENEMIES,
@@ -73,6 +77,7 @@ export class EnemySpawner {
     };
     this.previousSpawnX = this.lastSpawnX;
     this.lastSpawnX = x;
+    this.waveRandomizer?.recordSpawn(x);
     this.lastSpawnedType = type;
     this.totalSpawned += 1;
 
@@ -165,6 +170,10 @@ export class EnemySpawner {
   }
 
   private getNextSpawnX(): number {
+    if (this.waveRandomizer) {
+      return this.waveRandomizer.nextSpawnX();
+    }
+
     const positions = ENEMY_SPAWNER.SPAWN_X_POSITIONS;
     return positions[this.totalSpawned % positions.length];
   }

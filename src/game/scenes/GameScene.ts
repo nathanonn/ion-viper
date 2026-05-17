@@ -19,6 +19,7 @@ import { EnemySpawner } from '../systems/EnemySpawner';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
 import { PowerUpSystem } from '../systems/PowerUpSystem';
+import { WaveRandomizer } from '../systems/WaveRandomizer';
 import { WaveSystem } from '../systems/WaveSystem';
 
 export class GameScene extends Phaser.Scene {
@@ -28,6 +29,7 @@ export class GameScene extends Phaser.Scene {
   private enemyProjectileSystem!: EnemyProjectileSystem;
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
+  private waveRandomizer!: WaveRandomizer;
   private feedbackSystem!: FeedbackSystem;
   private powerUpSystem!: PowerUpSystem;
   private background!: Phaser.GameObjects.Image;
@@ -86,6 +88,14 @@ export class GameScene extends Phaser.Scene {
       activeCharger: 0,
       lastSpawnedType: 'none',
     });
+    this.registry.set('waveRandomization', {
+      enabled: true,
+      spawnCount: 0,
+      uniqueSpawnLanes: 0,
+      minimumRecentSpacing: 0,
+      lastSpawnX: 0,
+      previousSpawnX: 0,
+    });
   }
 
   create(): void {
@@ -108,14 +118,10 @@ export class GameScene extends Phaser.Scene {
     this.playerWeapon = new PlayerWeapon(this, this.player, () =>
       this.powerUpSystem.getProjectileCount()
     );
-    this.enemySpawner = new EnemySpawner(this);
+    this.waveRandomizer = new WaveRandomizer();
+    this.enemySpawner = new EnemySpawner(this, this.waveRandomizer);
     this.enemyProjectileSystem = new EnemyProjectileSystem(this, this.enemySpawner.getGroup());
-    const waveSpawnCounts = new WeakMap<(typeof WAVE_CONFIGS)[number], number>();
-    this.waveSystem = new WaveSystem(WAVE_CONFIGS, (wave) => {
-      const spawnIndex = waveSpawnCounts.get(wave) ?? 0;
-      waveSpawnCounts.set(wave, spawnIndex + 1);
-      const type =
-        wave.typeSequence?.[spawnIndex % wave.typeSequence.length] ?? wave.type;
+    this.waveSystem = new WaveSystem(WAVE_CONFIGS, ({ type }) => {
       const enemy = this.enemySpawner.spawnEnemy({
         type,
         getPlayerPosition: () => this.player.getPosition(),
@@ -123,11 +129,12 @@ export class GameScene extends Phaser.Scene {
           this.waveSystem.onEnemyCleared();
           this.publishWaveState();
           this.publishEnemyState();
+          this.publishRandomizationState();
         },
       });
 
       return enemy !== null;
-    });
+    }, this.waveRandomizer);
     this.waveSystem.start();
     this.combatSystem = new CombatSystem(this, this.player, (score) => {
       this.scene.start(SCENE_KEYS.GAME_OVER, { score });
@@ -173,6 +180,7 @@ export class GameScene extends Phaser.Scene {
     this.publishPlayerState();
     this.publishIonBlastState();
     this.publishWaveState();
+    this.publishRandomizationState();
     this.scene.launch(SCENE_KEYS.HUD);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.feedbackSystem.stopMusic();
@@ -208,6 +216,7 @@ export class GameScene extends Phaser.Scene {
     this.publishEnemyState();
     this.publishIonBlastState();
     this.publishWaveState();
+    this.publishRandomizationState();
   }
 
   private publishPlayerState(): void {
@@ -229,6 +238,10 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('currentWave', waveState.currentWave);
     this.registry.set('waveCount', waveState.waveCount);
     this.registry.set('gameWon', waveState.gameWon);
+  }
+
+  private publishRandomizationState(): void {
+    this.registry.set('waveRandomization', this.waveRandomizer.getState());
   }
 
   private publishIonBlastState(): void {
