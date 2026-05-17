@@ -6,6 +6,7 @@ export interface WaveSystemState {
   currentWave: number;
   waveCount: number;
   gameWon: boolean;
+  regularWavesComplete: boolean;
 }
 
 export interface WaveSpawnRequest {
@@ -24,6 +25,7 @@ export class WaveSystem {
   private currentSpawnDelayMs = 0;
   private started = false;
   private gameWon = false;
+  private regularWavesComplete = false;
 
   constructor(
     private readonly waves: WaveConfig[],
@@ -39,16 +41,17 @@ export class WaveSystem {
     this.currentSpawnDelayMs = this.getNextSpawnDelay();
     this.started = true;
     this.gameWon = this.waves.length === 0;
+    this.regularWavesComplete = this.waves.length === 0;
   }
 
   update(delta: number): void {
-    if (!this.started || this.gameWon) {
+    if (!this.started || this.gameWon || this.regularWavesComplete) {
       return;
     }
 
     const wave = this.getCurrentWaveConfig();
     if (!wave) {
-      this.gameWon = true;
+      this.regularWavesComplete = true;
       return;
     }
 
@@ -81,7 +84,12 @@ export class WaveSystem {
   }
 
   onEnemyCleared(): void {
-    if (!this.started || this.gameWon || this.clearedInWave >= this.spawnedInWave) {
+    if (
+      !this.started ||
+      this.gameWon ||
+      this.regularWavesComplete ||
+      this.clearedInWave >= this.spawnedInWave
+    ) {
       return;
     }
 
@@ -114,11 +122,22 @@ export class WaveSystem {
     return this.gameWon;
   }
 
+  areRegularWavesComplete(): boolean {
+    return this.regularWavesComplete;
+  }
+
+  markGameWon(): void {
+    if (this.regularWavesComplete) {
+      this.gameWon = true;
+    }
+  }
+
   getState(): WaveSystemState {
     return {
       currentWave: this.getCurrentWave(),
       waveCount: this.getWaveCount(),
       gameWon: this.isGameWon(),
+      regularWavesComplete: this.areRegularWavesComplete(),
     };
   }
 
@@ -146,7 +165,7 @@ export class WaveSystem {
     }
 
     if (this.currentWaveIndex >= this.waves.length - 1) {
-      this.gameWon = true;
+      this.regularWavesComplete = true;
       return;
     }
 

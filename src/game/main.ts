@@ -4,6 +4,7 @@ import { GameOverScene } from './scenes/GameOverScene';
 import { GameScene } from './scenes/GameScene';
 import { HUDScene } from './scenes/HUDScene';
 import { MenuScene } from './scenes/MenuScene';
+import { VictoryScene } from './scenes/VictoryScene';
 import { GAME_HEIGHT, GAME_WIDTH } from './configs/constants';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
@@ -12,7 +13,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   height: GAME_HEIGHT,
   parent: 'game-container',
   backgroundColor: '#000000',
-  scene: [BootScene, MenuScene, GameScene, HUDScene, GameOverScene],
+  scene: [BootScene, MenuScene, GameScene, HUDScene, GameOverScene, VictoryScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

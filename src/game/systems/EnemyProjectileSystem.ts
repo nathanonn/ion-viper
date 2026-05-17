@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ASSET_KEYS, ENEMY, ENEMY_PROJECTILE } from '../configs/constants';
+import { ASSET_KEYS, BOSS, ENEMY, ENEMY_PROJECTILE } from '../configs/constants';
 import { Enemy } from '../objects/Enemy';
 import { EnemyProjectile } from '../objects/EnemyProjectile';
 
@@ -39,6 +39,23 @@ export class EnemyProjectileSystem {
 
     projectile.fire(enemy.x, enemy.y + ENEMY.HEIGHT / 2 + ENEMY_PROJECTILE.HEIGHT / 2);
     return true;
+  }
+
+  fireBossPattern(x: number, y: number, phase: 1 | 2 | 3): number {
+    let firedCount = 0;
+    const phaseConfig = BOSS.PHASES[phase];
+
+    for (const offsetX of phaseConfig.PROJECTILE_OFFSETS) {
+      const projectile = this.projectiles.getFirstDead(false) as EnemyProjectile | null;
+      if (!projectile) {
+        return firedCount;
+      }
+
+      projectile.fire(x + offsetX, y + BOSS.HEIGHT / 2 + ENEMY_PROJECTILE.HEIGHT / 2);
+      firedCount += 1;
+    }
+
+    return firedCount;
   }
 
   getState(): EnemyProjectileState {

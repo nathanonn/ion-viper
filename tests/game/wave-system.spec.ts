@@ -18,6 +18,7 @@ interface WaveState {
   gameWon: boolean;
   gameOver: boolean;
   enemies: EnemiesState;
+  boss: { active: boolean; defeated: boolean };
 }
 
 async function startGame(page: Page): Promise<void> {
@@ -36,6 +37,7 @@ async function getWaveState(page: Page): Promise<WaveState> {
     gameWon: state.gameWon as boolean,
     gameOver: state.gameOver,
     enemies: state.enemies as EnemiesState,
+    boss: state.boss as { active: boolean; defeated: boolean },
   };
 }
 
@@ -118,7 +120,9 @@ test.describe('Wave system', () => {
     expect(isHarder).toBe(true);
   });
 
-  test('M-004 and S-002: final wave clear sets gameWon and stops spawning', async ({ page }) => {
+  test('M-004 and S-002: final wave clear starts boss and stops regular spawning', async ({
+    page,
+  }) => {
     await startGame(page);
 
     for (let waveIndex = 0; waveIndex < WAVE_CONFIGS.length; waveIndex += 1) {
@@ -126,21 +130,25 @@ test.describe('Wave system', () => {
     }
 
     await page.waitForFunction(
-      () => (window as any).__GAME_STATE__?.gameWon === true,
+      () =>
+        (window as any).__GAME_STATE__?.boss?.active === true &&
+        (window as any).__GAME_STATE__?.gameWon === false,
       undefined,
       { timeout: 2000 }
     );
-    const won = await getWaveState(page);
+    const bossGate = await getWaveState(page);
     await page.waitForTimeout(WAVE_CONFIGS[WAVE_CONFIGS.length - 1].spawnDelayMs + 200);
     const afterWait = await getWaveState(page);
 
-    expect(won.gameWon).toBe(true);
-    expect(won.currentWave).toBe(WAVE_CONFIGS.length);
-    expect(won.waveCount).toBe(WAVE_CONFIGS.length);
-    expect(won.gameOver).toBe(false);
-    expect(won.enemies.activeCount).toBe(0);
-    expect(afterWait.enemies.totalSpawned).toBe(won.enemies.totalSpawned);
-    await page.screenshot({ path: `${ARTIFACT_DIR}/win-state.png` });
+    expect(bossGate.gameWon).toBe(false);
+    expect(bossGate.currentWave).toBe(WAVE_CONFIGS.length);
+    expect(bossGate.waveCount).toBe(WAVE_CONFIGS.length);
+    expect(bossGate.gameOver).toBe(false);
+    expect(bossGate.enemies.activeCount).toBe(0);
+    expect(bossGate.boss.active).toBe(true);
+    expect(bossGate.boss.defeated).toBe(false);
+    expect(afterWait.enemies.totalSpawned).toBe(bossGate.enemies.totalSpawned);
+    await page.screenshot({ path: `${ARTIFACT_DIR}/boss-gate-state.png` });
   });
 
   test('M-005: state bridge reports wave fields', async ({ page }) => {

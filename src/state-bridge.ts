@@ -68,6 +68,15 @@ export interface GameState {
     lastSpawnX: number;
     previousSpawnX: number;
   };
+  // --- Goal 12 adds fields below this line ---
+  boss: {
+    active: boolean;
+    health: number;
+    maxHealth: number;
+    phase: number;
+    defeated: boolean;
+  };
+  victoryVisible: boolean;
 }
 
 declare global {
@@ -93,6 +102,8 @@ export function updateGameState(game: Phaser.Game): void {
   const activeScene = getActiveSceneKey(game);
   const isReady = game.scene.getScenes(true).length > 0;
   const hudVisible = game.scene.isActive(SCENE_KEYS.HUD) && game.scene.isVisible(SCENE_KEYS.HUD);
+  const victoryVisible =
+    game.scene.isActive(SCENE_KEYS.VICTORY) && game.scene.isVisible(SCENE_KEYS.VICTORY);
 
   const state: GameState = {
     scene: activeScene,
@@ -158,6 +169,15 @@ export function updateGameState(game: Phaser.Game): void {
       lastSpawnX: 0,
       previousSpawnX: 0,
     },
+    // --- Goal 12 populates fields below this line ---
+    boss: game.registry.get('boss') ?? {
+      active: false,
+      health: 0,
+      maxHealth: 0,
+      phase: 1,
+      defeated: false,
+    },
+    victoryVisible: game.registry.get('victoryVisible') ?? victoryVisible,
   };
 
   window.__GAME_STATE__ = state;

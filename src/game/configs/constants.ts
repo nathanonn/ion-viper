@@ -7,6 +7,7 @@ export const SCENE_KEYS = {
   GAME: 'GameScene',
   GAME_OVER: 'GameOverScene',
   HUD: 'HUDScene',
+  VICTORY: 'VictoryScene',
 } as const;
 
 /**
@@ -143,6 +144,37 @@ export const ENEMY_PROJECTILE = {
   HEIGHT: 10,
   SPEED: 190,
   MAX_PROJECTILES: 24,
+} as const;
+
+export const BOSS = {
+  WIDTH: 96,
+  HEIGHT: 64,
+  MAX_HEALTH: 18,
+  START_X: GAME_WIDTH / 2,
+  START_Y: 86,
+  MOVE_RANGE_X: 220,
+  PHASE_1_HEALTH_RATIO: 0.66,
+  PHASE_2_HEALTH_RATIO: 0.33,
+  PHASES: {
+    1: {
+      FIRE_INTERVAL_MS: 850,
+      MOVE_SPEED: 0.0018,
+      PROJECTILE_OFFSETS: [0],
+      TINT: 0x66ddff,
+    },
+    2: {
+      FIRE_INTERVAL_MS: 620,
+      MOVE_SPEED: 0.0024,
+      PROJECTILE_OFFSETS: [-28, 28],
+      TINT: 0xffcc44,
+    },
+    3: {
+      FIRE_INTERVAL_MS: 430,
+      MOVE_SPEED: 0.0031,
+      PROJECTILE_OFFSETS: [-44, 0, 44],
+      TINT: 0xff5588,
+    },
+  },
 } as const;
 
 export const ENEMY_SPAWNER = {

@@ -9,10 +9,12 @@ import {
   SCENE_KEYS,
 } from '../configs/constants';
 import { WAVE_CONFIGS } from '../data/waves';
+import { Boss } from '../objects/Boss';
 import { Enemy } from '../objects/Enemy';
 import { EnemyProjectile } from '../objects/EnemyProjectile';
 import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
+import { BossSystem } from '../systems/BossSystem';
 import { CombatSystem } from '../systems/CombatSystem';
 import { EnemyProjectileSystem } from '../systems/EnemyProjectileSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
@@ -29,6 +31,7 @@ export class GameScene extends Phaser.Scene {
   private enemyProjectileSystem!: EnemyProjectileSystem;
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
+  private bossSystem!: BossSystem;
   private waveRandomizer!: WaveRandomizer;
   private feedbackSystem!: FeedbackSystem;
   private powerUpSystem!: PowerUpSystem;
@@ -52,6 +55,7 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('playerHealth', PLAYER_COMBAT.STARTING_HEALTH);
     this.registry.set('gameOver', false);
     this.registry.set('gameWon', false);
+    this.registry.set('victoryVisible', false);
     this.registry.set('currentWave', 1);
     this.registry.set('waveCount', WAVE_CONFIGS.length);
     this.registry.set('playerAlive', true);
@@ -96,6 +100,13 @@ export class GameScene extends Phaser.Scene {
       lastSpawnX: 0,
       previousSpawnX: 0,
     });
+    this.registry.set('boss', {
+      active: false,
+      health: 0,
+      maxHealth: 0,
+      phase: 1,
+      defeated: false,
+    });
   }
 
   create(): void {
@@ -121,6 +132,9 @@ export class GameScene extends Phaser.Scene {
     this.waveRandomizer = new WaveRandomizer();
     this.enemySpawner = new EnemySpawner(this, this.waveRandomizer);
     this.enemyProjectileSystem = new EnemyProjectileSystem(this, this.enemySpawner.getGroup());
+    this.bossSystem = new BossSystem(this, this.enemyProjectileSystem, () =>
+      this.handleBossDefeated()
+    );
     this.waveSystem = new WaveSystem(WAVE_CONFIGS, ({ type }) => {
       const enemy = this.enemySpawner.spawnEnemy({
         type,
@@ -130,6 +144,7 @@ export class GameScene extends Phaser.Scene {
           this.publishWaveState();
           this.publishEnemyState();
           this.publishRandomizationState();
+          this.startBossIfRegularWavesComplete();
         },
       });
 
@@ -143,6 +158,13 @@ export class GameScene extends Phaser.Scene {
       this.playerWeapon.getGroup(),
       this.enemySpawner.getGroup(),
       this.handleBulletEnemyOverlap,
+      undefined,
+      this
+    );
+    this.physics.add.overlap(
+      this.playerWeapon.getGroup(),
+      this.bossSystem.getBoss(),
+      this.handleBulletBossOverlap,
       undefined,
       this
     );
@@ -180,6 +202,7 @@ export class GameScene extends Phaser.Scene {
     this.publishPlayerState();
     this.publishIonBlastState();
     this.publishWaveState();
+    this.publishBossState();
     this.publishRandomizationState();
     this.scene.launch(SCENE_KEYS.HUD);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -211,11 +234,14 @@ export class GameScene extends Phaser.Scene {
       this.feedbackSystem.playerFired();
     }
     this.waveSystem.update(delta);
+    this.startBossIfRegularWavesComplete();
+    this.bossSystem.update(delta);
     this.enemyProjectileSystem.update(delta);
     this.publishPlayerState();
     this.publishEnemyState();
     this.publishIonBlastState();
     this.publishWaveState();
+    this.publishBossState();
     this.publishRandomizationState();
   }
 
@@ -238,6 +264,10 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('currentWave', waveState.currentWave);
     this.registry.set('waveCount', waveState.waveCount);
     this.registry.set('gameWon', waveState.gameWon);
+  }
+
+  private publishBossState(): void {
+    this.registry.set('boss', this.bossSystem.getState());
   }
 
   private publishRandomizationState(): void {
@@ -278,6 +308,55 @@ export class GameScene extends Phaser.Scene {
     this.publishPlayerState();
     this.publishEnemyState();
     this.publishWaveState();
+  }
+
+  private handleBulletBossOverlap(
+    bulletObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile,
+    bossObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile
+  ): void {
+    const bullet = bulletObject as PlayerBullet;
+    const boss = bossObject as Boss;
+    const impactX = boss.x;
+    const impactY = boss.y;
+
+    bullet.recycle();
+    const didDamage = this.bossSystem.damageBoss(1);
+    if (didDamage && this.bossSystem.isDefeated()) {
+      this.feedbackSystem.enemyDestroyed(impactX, impactY);
+    }
+
+    this.publishPlayerState();
+    this.publishBossState();
+    this.publishWaveState();
+  }
+
+  private startBossIfRegularWavesComplete(): void {
+    if (
+      this.waveSystem.areRegularWavesComplete() &&
+      !this.bossSystem.isActive() &&
+      !this.bossSystem.isDefeated()
+    ) {
+      this.bossSystem.startBoss();
+      this.publishBossState();
+      this.publishWaveState();
+    }
+  }
+
+  private handleBossDefeated(): void {
+    this.waveSystem.markGameWon();
+    this.registry.set('gameWon', true);
+    this.publishBossState();
+    this.publishWaveState();
+    this.feedbackSystem.stopMusic();
+    this.scene.start(SCENE_KEYS.VICTORY, { score: this.registry.get('score') ?? 0 });
   }
 
   private handlePlayerEnemyOverlap(

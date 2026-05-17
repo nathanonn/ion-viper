@@ -143,7 +143,7 @@ test.describe('Randomized waves', () => {
     await page.screenshot({ path: `${ARTIFACT_DIR}/mixed-wave-readability.png` });
   });
 
-  test('M-004: randomized waves advance and complete through the final wave', async ({
+  test('M-004: randomized waves advance through the final wave and start boss', async ({
     page,
   }) => {
     await startGame(page);
@@ -153,7 +153,9 @@ test.describe('Randomized waves', () => {
     }
 
     await page.waitForFunction(
-      () => (window as any).__GAME_STATE__?.gameWon === true,
+      () =>
+        (window as any).__GAME_STATE__?.boss?.active === true &&
+        (window as any).__GAME_STATE__?.gameWon === false,
       undefined,
       { timeout: 2000 }
     );
@@ -162,7 +164,8 @@ test.describe('Randomized waves', () => {
 
     expect(state.currentWave).toBe(WAVE_CONFIGS.length);
     expect(state.waveCount).toBe(WAVE_CONFIGS.length);
-    expect(state.gameWon).toBe(true);
+    expect(state.gameWon).toBe(false);
+    expect((state.boss as { active: boolean }).active).toBe(true);
     expect(state.gameOver).toBe(false);
     expect(enemies.activeCount).toBe(0);
   });
