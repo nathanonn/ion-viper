@@ -3,3 +3,7 @@ dist/
 test-results/
 goals/*/test-artifacts/
 .DS_Store
+.playwright-cli
+.claude
+*.mp4
+*.webm
