@@ -47,6 +47,14 @@ export const TEXT_COLORS = {
 
 // --- Goal 00 adds constants below this line ---
 // --- Goal 01 adds constants below this line ---
+export const PLAYER_SHIP = {
+  WIDTH: 32,
+  HEIGHT: 32,
+  SPEED: 260,
+  START_X: GAME_WIDTH / 2,
+  START_Y: GAME_HEIGHT - 64,
+} as const;
+
 // --- Goal 02 adds constants below this line ---
 // --- Goal 03 adds constants below this line ---
 // --- Goal 04 adds constants below this line ---
