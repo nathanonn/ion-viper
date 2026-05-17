@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { SCENE_KEYS } from './game/configs/constants';
 
 /**
  * State Bridge - exposes game state to window.__GAME_STATE__ for Playwright testing.
@@ -29,6 +30,8 @@ export interface GameState {
   };
   // --- Goal 04 adds fields below this line ---
   playerHealth: number;
+  // --- Goal 05 adds fields below this line ---
+  hudVisible: boolean;
 }
 
 declare global {
@@ -39,6 +42,11 @@ declare global {
 
 function getActiveSceneKey(game: Phaser.Game): string {
   const scenes = game.scene.getScenes(true);
+  const gameplayScene = scenes.find((scene) => scene.scene.key === SCENE_KEYS.GAME);
+  if (gameplayScene) {
+    return gameplayScene.scene.key;
+  }
+
   if (scenes.length > 0) {
     return scenes[0].scene.key;
   }
@@ -48,6 +56,7 @@ function getActiveSceneKey(game: Phaser.Game): string {
 export function updateGameState(game: Phaser.Game): void {
   const activeScene = getActiveSceneKey(game);
   const isReady = game.scene.getScenes(true).length > 0;
+  const hudVisible = game.scene.isActive(SCENE_KEYS.HUD) && game.scene.isVisible(SCENE_KEYS.HUD);
 
   const state: GameState = {
     scene: activeScene,
@@ -72,6 +81,8 @@ export function updateGameState(game: Phaser.Game): void {
     },
     // --- Goal 04 populates fields below this line ---
     playerHealth: game.registry.get('playerHealth') ?? 0,
+    // --- Goal 05 populates fields below this line ---
+    hudVisible,
   };
 
   window.__GAME_STATE__ = state;

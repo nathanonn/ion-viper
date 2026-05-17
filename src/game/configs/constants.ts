@@ -89,3 +89,12 @@ export const PLAYER_COMBAT = {
   INVULNERABILITY_MS: 1000,
   FLASH_INTERVAL_MS: 100,
 } as const;
+
+// --- Goal 05 adds constants below this line ---
+export const HUD = {
+  PADDING: 16,
+  LINE_HEIGHT: 24,
+  FONT_SIZE: '18px',
+  DEPTH: 1000,
+  WAVE_PLACEHOLDER: '-',
+} as const;

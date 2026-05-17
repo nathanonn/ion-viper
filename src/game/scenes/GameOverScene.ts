@@ -13,6 +13,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.scene.stop(SCENE_KEYS.HUD);
     this.registry.set('gameOver', true);
 
     this.add

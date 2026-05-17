@@ -78,6 +78,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.publishPlayerState();
+    this.scene.launch(SCENE_KEYS.HUD);
   }
 
   update(_time: number, delta: number): void {
