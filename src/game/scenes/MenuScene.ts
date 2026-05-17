@@ -1,5 +1,13 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, SCENE_KEYS } from '../configs/constants';
+import {
+  COLORS,
+  GAME_HEIGHT,
+  GAME_TITLE,
+  GAME_WIDTH,
+  MENU_START_PROMPT,
+  SCENE_KEYS,
+  TEXT_COLORS,
+} from '../configs/constants';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -8,17 +16,17 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, 'Raiden Shooter', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, GAME_TITLE, {
         fontSize: '48px',
-        color: '#ffffff',
+        color: TEXT_COLORS.PRIMARY,
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
 
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50, 'Press SPACE to start', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50, MENU_START_PROMPT, {
         fontSize: '20px',
-        color: '#aaaaaa',
+        color: TEXT_COLORS.SECONDARY,
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);

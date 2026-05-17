@@ -41,3 +41,27 @@ export async function waitForGameReady(page: Page, timeout: number = 15000): Pro
     { timeout }
   );
 }
+
+export interface PageDiagnostics {
+  pageErrors: string[];
+  consoleErrors: string[];
+}
+
+export function trackPageDiagnostics(page: Page): PageDiagnostics {
+  const diagnostics: PageDiagnostics = {
+    pageErrors: [],
+    consoleErrors: [],
+  };
+
+  page.on('pageerror', (error) => {
+    diagnostics.pageErrors.push(error.message);
+  });
+
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      diagnostics.consoleErrors.push(message.text());
+    }
+  });
+
+  return diagnostics;
+}

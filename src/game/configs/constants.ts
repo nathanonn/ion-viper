@@ -14,6 +14,18 @@ export const SCENE_KEYS = {
  */
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 600;
+export const WORLD_BOUNDS = {
+  x: 0,
+  y: 0,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
+} as const;
+
+/**
+ * Game-specific labels for the foundation scenes.
+ */
+export const GAME_TITLE = 'Raiden Shooter';
+export const MENU_START_PROMPT = 'Press SPACE to start';
 
 /**
  * Placeholder colors for geometric shapes before final pixel art arrives.
@@ -26,6 +38,11 @@ export const COLORS = {
   BACKGROUND: 0x111111,
   UI_TEXT: 0xffffff,
   ACCENT: 0x00aaff,
+} as const;
+
+export const TEXT_COLORS = {
+  PRIMARY: '#ffffff',
+  SECONDARY: '#aaaaaa',
 } as const;
 
 // --- Goal 00 adds constants below this line ---
