@@ -198,6 +198,13 @@ export const WAVE_RANDOMIZATION = {
   },
 } as const;
 
+export const DIFFICULTY = {
+  BASE_LOOP: 1,
+  ENEMY_SPEED_INCREASE_PER_LOOP: 0.16,
+  ENEMY_HEALTH_INCREASE_PER_LOOP: 0.35,
+  BOSS_HEALTH_INCREASE_PER_LOOP: 0.4,
+} as const;
+
 // --- Goal 04 adds constants below this line ---
 export const PLAYER_COMBAT = {
   STARTING_HEALTH: 3,

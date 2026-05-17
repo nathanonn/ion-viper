@@ -3,13 +3,15 @@ import { ASSET_KEYS, GAME_HEIGHT, GAME_WIDTH, SCENE_KEYS } from '../configs/cons
 
 export class GameOverScene extends Phaser.Scene {
   private finalScore = 0;
+  private difficultyLoop = 1;
 
   constructor() {
     super({ key: SCENE_KEYS.GAME_OVER });
   }
 
-  init(data: { score?: number }): void {
+  init(data: { score?: number; difficultyLoop?: number }): void {
     this.finalScore = data.score ?? this.registry.get('score') ?? 0;
+    this.difficultyLoop = data.difficultyLoop ?? this.registry.get('difficulty')?.loop ?? 1;
   }
 
   create(): void {
@@ -44,16 +46,21 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, 'Press SPACE to restart', {
-        fontSize: '20px',
-        color: '#aaaaaa',
-        fontFamily: 'monospace',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT / 2 + 60,
+        `Press SPACE to retry loop ${this.difficultyLoop}`,
+        {
+          fontSize: '20px',
+          color: '#aaaaaa',
+          fontFamily: 'monospace',
+        }
+      )
       .setOrigin(0.5);
 
     const spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     spaceKey.once('down', () => {
-      this.scene.start(SCENE_KEYS.GAME);
+      this.scene.start(SCENE_KEYS.GAME, { difficultyLoop: this.difficultyLoop });
     });
   }
 }

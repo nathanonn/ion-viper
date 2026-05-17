@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ENEMY_SPAWNER } from '../configs/constants';
 import { getEnemyTypeConfig, type EnemyType } from '../data/enemies';
 import { Enemy } from '../objects/Enemy';
+import type { DifficultySystem } from './DifficultySystem';
 import type { WaveRandomizer } from './WaveRandomizer';
 
 export interface EnemySpawnOptions {
@@ -42,7 +43,8 @@ export class EnemySpawner {
 
   constructor(
     private readonly scene: Phaser.Scene,
-    private readonly waveRandomizer?: WaveRandomizer
+    private readonly waveRandomizer?: WaveRandomizer,
+    private readonly difficultySystem?: DifficultySystem
   ) {
     this.enemies = scene.physics.add.group({
       classType: Enemy,
@@ -72,7 +74,15 @@ export class EnemySpawner {
     const baseConfig = getEnemyTypeConfig(type);
     const config = {
       ...baseConfig,
-      speed: options.speed ?? baseConfig.speed,
+      behavior:
+        baseConfig.behavior.kind === 'charger'
+          ? {
+              ...baseConfig.behavior,
+              chargeSpeed: this.scaleSpeed(baseConfig.behavior.chargeSpeed),
+            }
+          : baseConfig.behavior,
+      health: this.scaleHealth(baseConfig.health),
+      speed: this.scaleSpeed(options.speed ?? baseConfig.speed),
       scoreValue: options.scoreValue ?? baseConfig.scoreValue,
     };
     this.previousSpawnX = this.lastSpawnX;
@@ -176,6 +186,14 @@ export class EnemySpawner {
 
     const positions = ENEMY_SPAWNER.SPAWN_X_POSITIONS;
     return positions[this.totalSpawned % positions.length];
+  }
+
+  private scaleSpeed(baseSpeed: number): number {
+    return baseSpeed * (this.difficultySystem?.getEnemySpeedMultiplier() ?? 1);
+  }
+
+  private scaleHealth(baseHealth: number): number {
+    return Math.ceil(baseHealth * (this.difficultySystem?.getEnemyHealthMultiplier() ?? 1));
   }
 
   private notifyCleared(enemy: Enemy): void {

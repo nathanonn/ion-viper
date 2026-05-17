@@ -94,6 +94,8 @@ export class HUDScene extends Phaser.Scene {
     const currentWave = this.registry.get('currentWave') ?? 1;
     const waveCount = this.registry.get('waveCount') ?? 1;
     const gameWon = this.registry.get('gameWon') ?? false;
+    const difficulty = this.registry.get('difficulty') ?? { loop: 1 };
+    const loop = difficulty.loop ?? 1;
     const boss = this.registry.get('boss') ?? {
       active: false,
       health: 0,
@@ -104,7 +106,9 @@ export class HUDScene extends Phaser.Scene {
 
     const nextScoreText = `Score: ${score}`;
     const nextHealthText = `Health: ${health}`;
-    const nextWaveText = gameWon ? 'Victory!' : `Wave: ${currentWave}/${waveCount}`;
+    const nextWaveText = gameWon
+      ? `Loop ${loop} clear`
+      : `Loop ${loop}  Wave: ${currentWave}/${waveCount}`;
 
     if (nextScoreText !== this.lastScoreText) {
       this.scoreText?.setText(nextScoreText);

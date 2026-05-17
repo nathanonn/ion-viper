@@ -77,6 +77,13 @@ export interface GameState {
     defeated: boolean;
   };
   victoryVisible: boolean;
+  // --- Goal 13 adds fields below this line ---
+  difficulty: {
+    loop: number;
+    enemySpeedMultiplier: number;
+    enemyHealthMultiplier: number;
+    bossHealthMultiplier: number;
+  };
 }
 
 declare global {
@@ -178,6 +185,13 @@ export function updateGameState(game: Phaser.Game): void {
       defeated: false,
     },
     victoryVisible: game.registry.get('victoryVisible') ?? victoryVisible,
+    // --- Goal 13 populates fields below this line ---
+    difficulty: game.registry.get('difficulty') ?? {
+      loop: 1,
+      enemySpeedMultiplier: 1,
+      enemyHealthMultiplier: 1,
+      bossHealthMultiplier: 1,
+    },
   };
 
   window.__GAME_STATE__ = state;

@@ -16,6 +16,7 @@ import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
 import { BossSystem } from '../systems/BossSystem';
 import { CombatSystem } from '../systems/CombatSystem';
+import { DifficultySystem } from '../systems/DifficultySystem';
 import { EnemyProjectileSystem } from '../systems/EnemyProjectileSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
@@ -23,6 +24,10 @@ import { PlayerWeapon } from '../systems/PlayerWeapon';
 import { PowerUpSystem } from '../systems/PowerUpSystem';
 import { WaveRandomizer } from '../systems/WaveRandomizer';
 import { WaveSystem } from '../systems/WaveSystem';
+
+interface GameSceneData {
+  difficultyLoop?: number;
+}
 
 export class GameScene extends Phaser.Scene {
   private player!: PlayerShip;
@@ -32,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
   private bossSystem!: BossSystem;
+  private difficultySystem!: DifficultySystem;
   private waveRandomizer!: WaveRandomizer;
   private feedbackSystem!: FeedbackSystem;
   private powerUpSystem!: PowerUpSystem;
@@ -50,7 +56,8 @@ export class GameScene extends Phaser.Scene {
     super({ key: SCENE_KEYS.GAME });
   }
 
-  init(): void {
+  init(data: GameSceneData = {}): void {
+    this.difficultySystem = DifficultySystem.fromLoop(data.difficultyLoop);
     this.registry.set('score', 0);
     this.registry.set('playerHealth', PLAYER_COMBAT.STARTING_HEALTH);
     this.registry.set('gameOver', false);
@@ -107,6 +114,7 @@ export class GameScene extends Phaser.Scene {
       phase: 1,
       defeated: false,
     });
+    this.publishDifficultyState();
   }
 
   create(): void {
@@ -130,29 +138,39 @@ export class GameScene extends Phaser.Scene {
       this.powerUpSystem.getProjectileCount()
     );
     this.waveRandomizer = new WaveRandomizer();
-    this.enemySpawner = new EnemySpawner(this, this.waveRandomizer);
+    this.enemySpawner = new EnemySpawner(this, this.waveRandomizer, this.difficultySystem);
     this.enemyProjectileSystem = new EnemyProjectileSystem(this, this.enemySpawner.getGroup());
-    this.bossSystem = new BossSystem(this, this.enemyProjectileSystem, () =>
-      this.handleBossDefeated()
+    this.bossSystem = new BossSystem(
+      this,
+      this.enemyProjectileSystem,
+      () => this.handleBossDefeated(),
+      this.difficultySystem
     );
-    this.waveSystem = new WaveSystem(WAVE_CONFIGS, ({ type }) => {
-      const enemy = this.enemySpawner.spawnEnemy({
-        type,
-        getPlayerPosition: () => this.player.getPosition(),
-        onCleared: () => {
-          this.waveSystem.onEnemyCleared();
-          this.publishWaveState();
-          this.publishEnemyState();
-          this.publishRandomizationState();
-          this.startBossIfRegularWavesComplete();
-        },
-      });
+    this.waveSystem = new WaveSystem(
+      WAVE_CONFIGS,
+      ({ type }) => {
+        const enemy = this.enemySpawner.spawnEnemy({
+          type,
+          getPlayerPosition: () => this.player.getPosition(),
+          onCleared: () => {
+            this.waveSystem.onEnemyCleared();
+            this.publishWaveState();
+            this.publishEnemyState();
+            this.publishRandomizationState();
+            this.startBossIfRegularWavesComplete();
+          },
+        });
 
-      return enemy !== null;
-    }, this.waveRandomizer);
+        return enemy !== null;
+      },
+      this.waveRandomizer
+    );
     this.waveSystem.start();
     this.combatSystem = new CombatSystem(this, this.player, (score) => {
-      this.scene.start(SCENE_KEYS.GAME_OVER, { score });
+      this.scene.start(SCENE_KEYS.GAME_OVER, {
+        score,
+        difficultyLoop: this.difficultySystem.getLoop(),
+      });
     });
     this.physics.add.overlap(
       this.playerWeapon.getGroup(),
@@ -204,6 +222,7 @@ export class GameScene extends Phaser.Scene {
     this.publishWaveState();
     this.publishBossState();
     this.publishRandomizationState();
+    this.publishDifficultyState();
     this.scene.launch(SCENE_KEYS.HUD);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.feedbackSystem.stopMusic();
@@ -217,6 +236,7 @@ export class GameScene extends Phaser.Scene {
     if (this.combatSystem.isGameOver()) {
       this.publishPlayerState();
       this.publishEnemyState();
+      this.publishDifficultyState();
       return;
     }
 
@@ -243,6 +263,7 @@ export class GameScene extends Phaser.Scene {
     this.publishWaveState();
     this.publishBossState();
     this.publishRandomizationState();
+    this.publishDifficultyState();
   }
 
   private publishPlayerState(): void {
@@ -276,6 +297,10 @@ export class GameScene extends Phaser.Scene {
 
   private publishIonBlastState(): void {
     this.registry.set('ionBlast', this.powerUpSystem.getState());
+  }
+
+  private publishDifficultyState(): void {
+    this.registry.set('difficulty', this.difficultySystem.getState());
   }
 
   private handleBulletEnemyOverlap(
@@ -356,7 +381,10 @@ export class GameScene extends Phaser.Scene {
     this.publishBossState();
     this.publishWaveState();
     this.feedbackSystem.stopMusic();
-    this.scene.start(SCENE_KEYS.VICTORY, { score: this.registry.get('score') ?? 0 });
+    this.scene.start(SCENE_KEYS.VICTORY, {
+      score: this.registry.get('score') ?? 0,
+      difficultyLoop: this.difficultySystem.getLoop(),
+    });
   }
 
   private handlePlayerEnemyOverlap(

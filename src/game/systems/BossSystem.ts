@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { BOSS } from '../configs/constants';
 import { Boss } from '../objects/Boss';
+import type { DifficultySystem } from './DifficultySystem';
 import type { EnemyProjectileSystem } from './EnemyProjectileSystem';
 
 export interface BossState {
@@ -21,7 +22,8 @@ export class BossSystem {
   constructor(
     scene: Phaser.Scene,
     private readonly projectileSystem: EnemyProjectileSystem,
-    private readonly onDefeated: () => void
+    private readonly onDefeated: () => void,
+    private readonly difficultySystem?: DifficultySystem
   ) {
     this.boss = new Boss(scene);
     scene.add.existing(this.boss);
@@ -39,6 +41,7 @@ export class BossSystem {
     this.phase = 1;
     this.attackElapsedMs = 0;
     this.boss.spawn();
+    this.applyDifficultyHealth();
   }
 
   update(delta: number): void {
@@ -76,6 +79,16 @@ export class BossSystem {
   }
 
   getState(): BossState {
+    if (!this.active && !this.defeated) {
+      return {
+        active: false,
+        health: 0,
+        maxHealth: 0,
+        phase: 1,
+        defeated: false,
+      };
+    }
+
     return {
       active: this.active,
       health: this.boss.getHealth(),
@@ -112,5 +125,15 @@ export class BossSystem {
       this.boss.setPhase(nextPhase);
       this.attackElapsedMs = BOSS.PHASES[nextPhase].FIRE_INTERVAL_MS;
     }
+  }
+
+  private applyDifficultyHealth(): void {
+    const scaledMaxHealth = Math.ceil(
+      BOSS.MAX_HEALTH * (this.difficultySystem?.getBossHealthMultiplier() ?? 1)
+    );
+    const bossHealth = this.boss as unknown as { health: number; maxHealth: number };
+
+    bossHealth.health = scaledMaxHealth;
+    bossHealth.maxHealth = scaledMaxHealth;
   }
 }
