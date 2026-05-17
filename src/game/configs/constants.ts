@@ -56,5 +56,16 @@ export const PLAYER_SHIP = {
 } as const;
 
 // --- Goal 02 adds constants below this line ---
+export const PLAYER_BULLET = {
+  WIDTH: 4,
+  HEIGHT: 12,
+  SPEED: 320,
+} as const;
+
+export const PLAYER_WEAPON = {
+  FIRE_INTERVAL_MS: 150,
+  MAX_BULLETS: 8,
+} as const;
+
 // --- Goal 03 adds constants below this line ---
 // --- Goal 04 adds constants below this line ---

@@ -16,6 +16,7 @@ export interface GameState {
   playerPosition: { x: number; y: number };
   playerAlive: boolean;
   // --- Goal 02 adds fields below this line ---
+  playerBullets: { activeCount: number };
   // --- Goal 03 adds fields below this line ---
   // --- Goal 04 adds fields below this line ---
 }
@@ -48,6 +49,7 @@ export function updateGameState(game: Phaser.Game): void {
     playerPosition: game.registry.get('playerPosition') ?? { x: 0, y: 0 },
     playerAlive: game.registry.get('playerAlive') ?? false,
     // --- Goal 02 populates fields below this line ---
+    playerBullets: game.registry.get('playerBullets') ?? { activeCount: 0 },
     // --- Goal 03 populates fields below this line ---
     // --- Goal 04 populates fields below this line ---
   };
