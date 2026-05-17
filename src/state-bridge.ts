@@ -32,6 +32,10 @@ export interface GameState {
   playerHealth: number;
   // --- Goal 05 adds fields below this line ---
   hudVisible: boolean;
+  // --- Goal 06 adds fields below this line ---
+  currentWave: number;
+  waveCount: number;
+  gameWon: boolean;
 }
 
 declare global {
@@ -83,6 +87,10 @@ export function updateGameState(game: Phaser.Game): void {
     playerHealth: game.registry.get('playerHealth') ?? 0,
     // --- Goal 05 populates fields below this line ---
     hudVisible,
+    // --- Goal 06 populates fields below this line ---
+    currentWave: game.registry.get('currentWave') ?? 1,
+    waveCount: game.registry.get('waveCount') ?? 0,
+    gameWon: game.registry.get('gameWon') ?? false,
   };
 
   window.__GAME_STATE__ = state;

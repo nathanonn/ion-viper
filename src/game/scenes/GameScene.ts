@@ -1,17 +1,20 @@
 import Phaser from 'phaser';
 import { PLAYER_COMBAT, PLAYER_SHIP, SCENE_KEYS } from '../configs/constants';
+import { WAVE_CONFIGS } from '../data/waves';
 import { Enemy } from '../objects/Enemy';
 import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
 import { CombatSystem } from '../systems/CombatSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
+import { WaveSystem } from '../systems/WaveSystem';
 
 export class GameScene extends Phaser.Scene {
   private player!: PlayerShip;
   private playerWeapon!: PlayerWeapon;
   private enemySpawner!: EnemySpawner;
   private combatSystem!: CombatSystem;
+  private waveSystem!: WaveSystem;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private wasdKeys!: {
@@ -29,6 +32,9 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('score', 0);
     this.registry.set('playerHealth', PLAYER_COMBAT.STARTING_HEALTH);
     this.registry.set('gameOver', false);
+    this.registry.set('gameWon', false);
+    this.registry.set('currentWave', 1);
+    this.registry.set('waveCount', WAVE_CONFIGS.length);
     this.registry.set('playerAlive', true);
     this.registry.set('playerPosition', {
       x: PLAYER_SHIP.START_X,
@@ -50,6 +56,20 @@ export class GameScene extends Phaser.Scene {
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
     this.playerWeapon = new PlayerWeapon(this, this.player);
     this.enemySpawner = new EnemySpawner(this);
+    this.waveSystem = new WaveSystem(WAVE_CONFIGS, (wave) => {
+      const enemy = this.enemySpawner.spawnEnemy({
+        speed: wave.enemySpeed,
+        scoreValue: wave.scoreValue,
+        onCleared: () => {
+          this.waveSystem.onEnemyCleared();
+          this.publishWaveState();
+          this.publishEnemyState();
+        },
+      });
+
+      return enemy !== null;
+    });
+    this.waveSystem.start();
     this.combatSystem = new CombatSystem(this, this.player, (score) => {
       this.scene.start(SCENE_KEYS.GAME_OVER, { score });
     });
@@ -78,6 +98,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.publishPlayerState();
+    this.publishWaveState();
     this.scene.launch(SCENE_KEYS.HUD);
   }
 
@@ -99,9 +120,10 @@ export class GameScene extends Phaser.Scene {
 
     this.player.moveFromInput(input, delta);
     this.playerWeapon.update(_time, this.spaceKey.isDown);
-    this.enemySpawner.update(delta);
+    this.waveSystem.update(delta);
     this.publishPlayerState();
     this.publishEnemyState();
+    this.publishWaveState();
   }
 
   private publishPlayerState(): void {
@@ -114,6 +136,13 @@ export class GameScene extends Phaser.Scene {
 
   private publishEnemyState(): void {
     this.registry.set('enemies', this.enemySpawner.getState());
+  }
+
+  private publishWaveState(): void {
+    const waveState = this.waveSystem.getState();
+    this.registry.set('currentWave', waveState.currentWave);
+    this.registry.set('waveCount', waveState.waveCount);
+    this.registry.set('gameWon', waveState.gameWon);
   }
 
   private handleBulletEnemyOverlap(
@@ -132,10 +161,13 @@ export class GameScene extends Phaser.Scene {
     const enemy = enemyObject as Enemy;
 
     bullet.recycle();
-    this.enemySpawner.destroyEnemy(enemy);
-    this.combatSystem.awardEnemyKill(enemy);
+    const didDestroy = this.enemySpawner.destroyEnemy(enemy);
+    if (didDestroy) {
+      this.combatSystem.awardEnemyKill(enemy);
+    }
     this.publishPlayerState();
     this.publishEnemyState();
+    this.publishWaveState();
   }
 
   private handlePlayerEnemyOverlap(

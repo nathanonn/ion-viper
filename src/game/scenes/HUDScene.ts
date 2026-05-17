@@ -51,9 +51,12 @@ export class HUDScene extends Phaser.Scene {
   private updateHudText(): void {
     const score = this.registry.get('score') ?? 0;
     const health = this.registry.get('playerHealth') ?? PLAYER_COMBAT.STARTING_HEALTH;
+    const currentWave = this.registry.get('currentWave') ?? 1;
+    const waveCount = this.registry.get('waveCount') ?? 1;
+    const gameWon = this.registry.get('gameWon') ?? false;
 
     this.scoreText?.setText(`Score: ${score}`);
     this.healthText?.setText(`Health: ${health}`);
-    this.waveText?.setText(`Wave: ${HUD.WAVE_PLACEHOLDER}`);
+    this.waveText?.setText(gameWon ? 'Victory!' : `Wave: ${currentWave}/${waveCount}`);
   }
 }

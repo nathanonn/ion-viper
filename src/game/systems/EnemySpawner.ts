@@ -2,6 +2,12 @@ import Phaser from 'phaser';
 import { ENEMY, ENEMY_SPAWNER } from '../configs/constants';
 import { Enemy } from '../objects/Enemy';
 
+export interface EnemySpawnOptions {
+  speed?: number;
+  scoreValue?: number;
+  onCleared?: () => void;
+}
+
 export interface EnemySpawnerState {
   activeCount: number;
   totalDestroyed: number;
@@ -20,6 +26,7 @@ export class EnemySpawner {
   private totalRecycled = 0;
   private lastSpawnX = 0;
   private previousSpawnX = 0;
+  private readonly clearCallbacks = new Map<Enemy, () => void>();
 
   constructor(private readonly scene: Phaser.Scene) {
     Enemy.createPlaceholderTexture(scene);
@@ -40,7 +47,7 @@ export class EnemySpawner {
     }
   }
 
-  spawnEnemy(): Enemy | null {
+  spawnEnemy(options: EnemySpawnOptions = {}): Enemy | null {
     const enemy = this.enemies.get() as Enemy | null;
 
     if (!enemy) {
@@ -48,23 +55,36 @@ export class EnemySpawner {
     }
 
     const x = this.getNextSpawnX();
+    const speed = options.speed ?? ENEMY.SPEED;
+    const scoreValue = options.scoreValue ?? ENEMY.SCORE_VALUE;
     this.previousSpawnX = this.lastSpawnX;
     this.lastSpawnX = x;
     this.totalSpawned += 1;
-    enemy.spawn(x, ENEMY_SPAWNER.SPAWN_Y, ENEMY.SPEED, () => {
+    (enemy as unknown as { scoreValue: number }).scoreValue = scoreValue;
+
+    if (options.onCleared) {
+      this.clearCallbacks.set(enemy, options.onCleared);
+    } else {
+      this.clearCallbacks.delete(enemy);
+    }
+
+    enemy.spawn(x, ENEMY_SPAWNER.SPAWN_Y, speed, () => {
       this.totalRecycled += 1;
+      this.notifyCleared(enemy);
     });
 
     return enemy;
   }
 
-  destroyEnemy(enemy: Enemy): void {
+  destroyEnemy(enemy: Enemy): boolean {
     if (!enemy.active) {
-      return;
+      return false;
     }
 
     enemy.recycle();
     this.totalDestroyed += 1;
+    this.notifyCleared(enemy);
+    return true;
   }
 
   getGroup(): Phaser.Physics.Arcade.Group {
@@ -98,5 +118,11 @@ export class EnemySpawner {
   private getNextSpawnX(): number {
     const positions = ENEMY_SPAWNER.SPAWN_X_POSITIONS;
     return positions[this.totalSpawned % positions.length];
+  }
+
+  private notifyCleared(enemy: Enemy): void {
+    const callback = this.clearCallbacks.get(enemy);
+    this.clearCallbacks.delete(enemy);
+    callback?.();
   }
 }
