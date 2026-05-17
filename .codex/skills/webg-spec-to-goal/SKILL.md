@@ -22,7 +22,9 @@ my-game/
 └── public/               assets directories
 ```
 
-Games naturally decompose into 5-7 goals following a universal build order. This skill generates **all goals at once** — no checkpoint between plan and generation.
+Games naturally decompose into 5-8 goals following a universal build order. This skill generates **all goals at once** — no checkpoint between plan and generation.
+
+**Extend mode**: This skill also supports extending an existing game with new features. When the user explicitly states they want to extend an existing game, the skill reads the current project state and generates additional goals that continue the sequence.
 
 ## Why this skill exists
 
@@ -58,13 +60,25 @@ Genre determines: Phaser physics config, data structures in scaffold, goal decom
 
 ## Core flow — 7 steps
 
-1. **Probe** — inspect cwd for existing projects, conflicts.
+### New game mode (default)
+
+1. **Probe** — inspect cwd for existing projects, conflicts, or extend intent.
 2. **Classify** — auto-detect genre from description, ask user to confirm.
 3. **Ask** — 2-3 rounds of clarifying questions (max 3 rounds).
 4. **Scaffold** — write runnable game skeleton.
 5. **Plan** — write `goals-plan.md` with goal sequence.
-6. **Write** — generate all goal folders at once.
+6. **Write** — generate all goal folders at once (including QC checkpoint as the final goal).
 7. **Hand off** — print file paths + `/goal` commands.
+
+### Extend mode (user explicitly states intent)
+
+1. **Probe** — detect existing project, read `goals-plan.md` + state bridge to understand current state.
+2. **Classify** — identify what genre the existing project is (from its goals-plan.md or AGENTS.md).
+3. **Ask** — 1-2 rounds: what features to add, scope, whether to include QC checkpoint.
+4. *(Skip scaffold — project already exists.)*
+5. **Plan** — append new goals to existing `goals-plan.md`.
+6. **Write** — generate new goal folders only (continuing goal numbering from highest existing).
+7. **Hand off** — print new file paths + `/goal` commands for the new goals only.
 
 Never write files until confidence is at 95%+.
 
@@ -75,19 +89,33 @@ Before asking the user anything, inspect the cwd.
 | Signal | What it tells us |
 |--------|-----------------|
 | `package.json` | Existing project — check for Phaser in deps |
-| `package.json` → Phaser 3 in deps | Existing Phaser project → **warn and redirect** (V1 = new projects only) |
+| `package.json` → Phaser 3 in deps | Existing Phaser project → check if extend mode |
 | `tsconfig.json` | TypeScript already configured |
 | `vite.config.*` | Build tool already in place |
-| `src/` with Phaser imports | Existing game code → warn and redirect |
+| `src/` with Phaser imports | Existing game code → check if extend mode |
 | `goals/` folder | Previous goal runs; check for slug collision |
+| `goals-plan.md` | Existing roadmap → strong signal for extend mode |
 | `AGENTS.md` | Existing conventions to respect |
 | `.gitignore` | Check coverage for node_modules, dist/ |
 | `index.html` | Existing entry point |
 | `tests/` with Playwright | Test infra already in place |
 
-**Existing Phaser project detected?** Stop. Print:
+### New game mode
 
-> This directory already contains a Phaser project. This skill is for new games only (V1). To add features to an existing game, write goal folders manually or use `/goal` directly.
+**Existing Phaser project detected AND user did NOT express extend intent?** Stop. Print:
+
+> This directory already contains a Phaser project. Would you like to extend it with new features (extend mode), or should we scaffold a new game in a different directory?
+
+### Extend mode detection
+
+The user explicitly states they want to extend an existing game (e.g., "add a boss fight to my shmup", "extend the game with a new level", "add power-ups to the existing game"). When this happens:
+
+1. Read `goals-plan.md` to determine: genre, variant, highest goal number, state bridge state.
+2. Read `src/state-bridge.ts` to see current fields.
+3. Read `AGENTS.md` for project conventions.
+4. Note the highest existing goal number (e.g., 08) — new goals start at N+1.
+
+If `goals-plan.md` doesn't exist but it's clearly a Phaser project made by this skill (has state-bridge.ts, goals/ folder), reconstruct the context from the goal folders.
 
 ## Step 2 — Classify
 
@@ -231,8 +259,11 @@ Every game follows this progression (some goals may be merged for simple games):
 | 04 | **UI / HUD** | Health bars, score display, menus, pause screen |
 | 05 | **Polish** | Art assets via $imagegen, sound effects, screen shake, particles, juice |
 | 06 | *(Optional)* **Bonus** | Tutorial, extra levels, achievements — only if user requested |
+| NN | **QC Checkpoint** | Final validation — gameplay loop cohesion, state bridge regression, difficulty balance, integration test |
 
 Goal 00 is always lightweight: verify the scaffold boots, tweak constants, confirm the state bridge reports correctly. The real work starts at Goal 01.
+
+**QC Checkpoint** is always the last goal (whatever number that ends up being). It validates the entire game as a cohesive experience: complete gameplay loop, clean restarts, state bridge correctness, and difficulty balance. Template lives in `references/qc-checkpoint-template.md`.
 
 The plan file includes: goal number, goal name, 1-2 line description, key ACs for that goal, and dependencies.
 
@@ -245,8 +276,9 @@ Templates live in:
 - `references/verify-template.md` — full VERIFY.md template (tiered verification)
 - `references/progress-template.md` — initial PROGRESS.md skeleton
 - `references/genre-templates.md` — per-genre goal decomposition sequences, ACs, state bridge fields, and variant mappings
+- `references/qc-checkpoint-template.md` — QC checkpoint goal (always last)
 
-Read these reference files when generating. Substitute placeholders with everything confirmed in Steps 2-3. Use `references/genre-templates.md` to determine the goal sequence, ACs, and state bridge fields for the detected genre.
+Read these reference files when generating. Substitute placeholders with everything confirmed in Steps 2-3. Use `references/genre-templates.md` to determine the goal sequence, ACs, and state bridge fields for the detected genre. Always generate the QC checkpoint as the final goal (use `references/qc-checkpoint-template.md`).
 
 ### GOAL.md — 13 sections
 
@@ -381,11 +413,54 @@ How to run:
 | >3 question rounds and confidence < 95% | Tell user the spec needs more detail |
 | Probe contradicts spec (e.g., existing Phaser project) | Surface the conflict; ask user to clarify |
 
+## Extend mode — detailed behavior
+
+When the user explicitly says they want to extend an existing game:
+
+### Step 1 (Probe) — Read existing project
+
+Read these files to understand current state:
+- `goals-plan.md` — genre, variant, goal count, state bridge growth
+- `src/state-bridge.ts` — current GameState interface fields
+- `AGENTS.md` — project conventions
+- `goals/` folder listing — highest goal number
+
+### Step 3 (Ask) — Extend-specific questions
+
+Round 1:
+- **What to add**: "What features or content do you want to add?" (draft suggestions based on the genre's Optional Goals in `references/genre-templates.md`)
+- **Scope**: "How large is this extension?" (1-2 new goals / 3-5 new goals / 6+ new goals)
+
+Round 2 (if 3+ new goals):
+- **QC checkpoint**: "Since this extension adds 3+ goals, I recommend including a QC checkpoint as the final goal to validate everything integrates well. Include it?" (Yes, include QC checkpoint (Recommended) / No, skip it)
+
+For extensions with <3 new goals, mention QC is available but default to skipping:
+> "This is a small extension (1-2 goals). I'll skip the QC checkpoint by default — let me know if you'd like to include it anyway."
+
+### Step 5 (Plan) — Append to existing plan
+
+- Read the existing `goals-plan.md`
+- Determine highest goal number (e.g., 08 if QC checkpoint was 08)
+- New goals continue from N+1 (e.g., 09, 10, 11...)
+- Append new goal rows to the Goal Sequence table
+- Append new state bridge fields to the State Bridge Growth table
+- If QC checkpoint is included, it's always the last goal in the new sequence
+
+### Step 6 (Write) — New folders only
+
+- Only generate goal folders for the new goals
+- AC IDs continue the sequence: if last existing AC was AC-08.7, new goals start at AC-09.1
+- State bridge additions build on the current cumulative state
+- Dependencies reference the last existing goal (or a specific existing goal if relevant)
+
+### Step 7 (Hand off) — New goals only
+
+Print only the new goal folders and `/goal` commands. Don't re-list existing files.
+
 ## What this skill does not do
 
 - It does not implement the game. That's `/goal`'s job.
 - It does not run tests. That's `/goal`'s job.
-- It does not work for existing Phaser projects (V1 = new projects only).
 - It does not work for 3D games, multiplayer games, or non-browser platforms.
 - It does not work for non-Phaser engines (Unity, Godot, Pixi.js, etc.).
 - It does not generate actual art assets. It sets up the pipeline for `/goal` to use `$imagegen`.

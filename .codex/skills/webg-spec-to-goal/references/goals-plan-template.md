@@ -30,6 +30,7 @@ Execute goals in order. Each goal depends on all previous goals being complete.
 | 04 | `goals/04-{{slug-04}}/` | {{Goal 04 Name}} | {{1-2 sentence description}} | 03 |
 | 05 | `goals/05-polish/` | Polish | Art via $imagegen, particles, screen shake, audio | 04 |
 {{| 06 | `goals/06-{{slug-06}}/` | {{Bonus Goal Name}} | {{Optional goal description}} | 05 |}}
+| {{NN}} | `goals/{{NN}}-qc-checkpoint/` | QC Checkpoint | Full gameplay loop validation, state bridge regression, difficulty balance | All previous |
 
 ## State Bridge Growth
 
@@ -80,6 +81,15 @@ Each goal adds fields to `window.__GAME_STATE__`. Fields accumulate — never re
 {{- AC-05.4: Sound effects for key actions}}
 {{- AC-05.5: Background music plays during GameScene}}
 - AC-05.6: No visual regressions — previous gameplay still works
+
+### Goal {{NN}} — QC Checkpoint
+- AC-{{NN}}.1: Full gameplay loop completes without errors (boot → menu → play → win → end → restart)
+- AC-{{NN}}.2: Loss path completes without errors (boot → menu → play → lose → game over → restart)
+- AC-{{NN}}.3: State bridge reports correct values at every stage
+- AC-{{NN}}.4: No console errors or warnings during a full play session
+- AC-{{NN}}.5: Scene restart cleans all state (no leaks from previous run)
+- AC-{{NN}}.6: Difficulty progression is smooth
+- AC-{{NN}}.7: All prior goals' tests still pass (full regression)
 
 ## Out of Scope (entire project)
 

@@ -792,6 +792,31 @@ This goal is lightweight — the scaffold already does most of the work. Goal 00
 
 ---
 
+## Universal QC Checkpoint Goal
+
+The QC checkpoint is always the LAST goal in the sequence for any genre. Its goal number is the highest (e.g., if the last feature/polish goal is 07, QC is 08).
+
+**Name**: `{{NN}}-qc-checkpoint`
+
+**Description**: Final validation — full gameplay loop, state bridge regression, difficulty balance, integration test.
+
+**ACs** (same for all genres):
+- AC-{{NN}}.1: Full gameplay loop completes without errors: boot → menu → play → win → end screen → restart → play again
+- AC-{{NN}}.2: Full gameplay loop completes the loss path: boot → menu → play → lose → game over → restart → play again
+- AC-{{NN}}.3: State bridge reports correct values at every stage (validated by integration test)
+- AC-{{NN}}.4: No console errors or warnings during a full play session
+- AC-{{NN}}.5: Scene restart cleans all state (no leaks from previous run)
+- AC-{{NN}}.6: Difficulty progression is smooth (no sudden spikes or trivial sections)
+- AC-{{NN}}.7: All prior goals' tests still pass (full regression)
+
+**State bridge fields**: (none — validates existing fields only)
+
+**Key output**: `tests/game/integration.spec.ts` — a Playwright test that exercises the full gameplay loop via state bridge assertions.
+
+See `references/qc-checkpoint-template.md` for the full GOAL.md template.
+
+---
+
 ## AC Format Reference
 
 All ACs use the stable ID format `AC-XX.Y`:
