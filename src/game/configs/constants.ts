@@ -138,6 +138,13 @@ export const ENEMY = {
   SCORE_VALUE: 100,
 } as const;
 
+export const ENEMY_PROJECTILE = {
+  WIDTH: 4,
+  HEIGHT: 10,
+  SPEED: 190,
+  MAX_PROJECTILES: 24,
+} as const;
+
 export const ENEMY_SPAWNER = {
   SPAWN_INTERVAL_MS: 500,
   MAX_ENEMIES: 12,

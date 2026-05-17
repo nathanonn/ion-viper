@@ -10,9 +10,11 @@ import {
 } from '../configs/constants';
 import { WAVE_CONFIGS } from '../data/waves';
 import { Enemy } from '../objects/Enemy';
+import { EnemyProjectile } from '../objects/EnemyProjectile';
 import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
 import { CombatSystem } from '../systems/CombatSystem';
+import { EnemyProjectileSystem } from '../systems/EnemyProjectileSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
@@ -23,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   private player!: PlayerShip;
   private playerWeapon!: PlayerWeapon;
   private enemySpawner!: EnemySpawner;
+  private enemyProjectileSystem!: EnemyProjectileSystem;
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
   private feedbackSystem!: FeedbackSystem;
@@ -76,6 +79,13 @@ export class GameScene extends Phaser.Scene {
       previousSpawnX: 0,
       samplePosition: { x: 0, y: 0 },
     });
+    this.registry.set('enemyProjectiles', { activeCount: 0 });
+    this.registry.set('enemyTypes', {
+      activeBasic: 0,
+      activeShooter: 0,
+      activeCharger: 0,
+      lastSpawnedType: 'none',
+    });
   }
 
   create(): void {
@@ -99,10 +109,16 @@ export class GameScene extends Phaser.Scene {
       this.powerUpSystem.getProjectileCount()
     );
     this.enemySpawner = new EnemySpawner(this);
+    this.enemyProjectileSystem = new EnemyProjectileSystem(this, this.enemySpawner.getGroup());
+    const waveSpawnCounts = new WeakMap<(typeof WAVE_CONFIGS)[number], number>();
     this.waveSystem = new WaveSystem(WAVE_CONFIGS, (wave) => {
+      const spawnIndex = waveSpawnCounts.get(wave) ?? 0;
+      waveSpawnCounts.set(wave, spawnIndex + 1);
+      const type =
+        wave.typeSequence?.[spawnIndex % wave.typeSequence.length] ?? wave.type;
       const enemy = this.enemySpawner.spawnEnemy({
-        speed: wave.enemySpeed,
-        scoreValue: wave.scoreValue,
+        type,
+        getPlayerPosition: () => this.player.getPosition(),
         onCleared: () => {
           this.waveSystem.onEnemyCleared();
           this.publishWaveState();
@@ -127,6 +143,13 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.enemySpawner.getGroup(),
       this.handlePlayerEnemyOverlap,
+      undefined,
+      this
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.enemyProjectileSystem.getGroup(),
+      this.handlePlayerEnemyProjectileOverlap,
       undefined,
       this
     );
@@ -180,6 +203,7 @@ export class GameScene extends Phaser.Scene {
       this.feedbackSystem.playerFired();
     }
     this.waveSystem.update(delta);
+    this.enemyProjectileSystem.update(delta);
     this.publishPlayerState();
     this.publishEnemyState();
     this.publishIonBlastState();
@@ -196,6 +220,8 @@ export class GameScene extends Phaser.Scene {
 
   private publishEnemyState(): void {
     this.registry.set('enemies', this.enemySpawner.getState());
+    this.registry.set('enemyTypes', this.enemySpawner.getTypeState());
+    this.registry.set('enemyProjectiles', this.enemyProjectileSystem.getState());
   }
 
   private publishWaveState(): void {
@@ -227,8 +253,12 @@ export class GameScene extends Phaser.Scene {
     bullet.recycle();
     const impactX = enemy.x;
     const impactY = enemy.y;
-    const didDestroy = this.enemySpawner.destroyEnemy(enemy);
-    if (didDestroy) {
+    enemy.damage(1);
+    if (enemy.isDestroyed()) {
+      const didDestroy = this.enemySpawner.destroyEnemy(enemy);
+      if (!didDestroy) {
+        return;
+      }
       this.feedbackSystem.enemyDestroyed(impactX, impactY);
       this.combatSystem.awardEnemyKill(enemy);
     }
@@ -254,5 +284,28 @@ export class GameScene extends Phaser.Scene {
       this.feedbackSystem.playerDamaged(this.player.x, this.player.y);
     }
     this.publishPlayerState();
+  }
+
+  private handlePlayerEnemyProjectileOverlap(
+    _playerObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile,
+    projectileObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile
+  ): void {
+    const projectile = projectileObject as EnemyProjectile;
+    projectile.recycle();
+
+    const didDamage = this.combatSystem.damagePlayer();
+    if (didDamage) {
+      this.feedbackSystem.playerDamaged(this.player.x, this.player.y);
+    }
+    this.publishPlayerState();
+    this.publishEnemyState();
   }
 }

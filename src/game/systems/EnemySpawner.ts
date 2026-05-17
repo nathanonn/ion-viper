@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
-import { ENEMY, ENEMY_SPAWNER } from '../configs/constants';
+import { ENEMY_SPAWNER } from '../configs/constants';
+import { getEnemyTypeConfig, type EnemyType } from '../data/enemies';
 import { Enemy } from '../objects/Enemy';
 
 export interface EnemySpawnOptions {
+  type?: EnemyType;
   speed?: number;
   scoreValue?: number;
   onCleared?: () => void;
+  getPlayerPosition?: () => { x: number; y: number };
 }
 
 export interface EnemySpawnerState {
@@ -18,6 +21,13 @@ export interface EnemySpawnerState {
   samplePosition: { x: number; y: number };
 }
 
+export interface EnemyTypeState {
+  activeBasic: number;
+  activeShooter: number;
+  activeCharger: number;
+  lastSpawnedType: string;
+}
+
 export class EnemySpawner {
   private readonly enemies: Phaser.Physics.Arcade.Group;
   private elapsedSinceSpawn = 0;
@@ -26,6 +36,7 @@ export class EnemySpawner {
   private totalRecycled = 0;
   private lastSpawnX = 0;
   private previousSpawnX = 0;
+  private lastSpawnedType: string = 'none';
   private readonly clearCallbacks = new Map<Enemy, () => void>();
 
   constructor(private readonly scene: Phaser.Scene) {
@@ -53,12 +64,17 @@ export class EnemySpawner {
     }
 
     const x = this.getNextSpawnX();
-    const speed = options.speed ?? ENEMY.SPEED;
-    const scoreValue = options.scoreValue ?? ENEMY.SCORE_VALUE;
+    const type = options.type ?? 'basic';
+    const baseConfig = getEnemyTypeConfig(type);
+    const config = {
+      ...baseConfig,
+      speed: options.speed ?? baseConfig.speed,
+      scoreValue: options.scoreValue ?? baseConfig.scoreValue,
+    };
     this.previousSpawnX = this.lastSpawnX;
     this.lastSpawnX = x;
+    this.lastSpawnedType = type;
     this.totalSpawned += 1;
-    (enemy as unknown as { scoreValue: number }).scoreValue = scoreValue;
 
     if (options.onCleared) {
       this.clearCallbacks.set(enemy, options.onCleared);
@@ -66,9 +82,14 @@ export class EnemySpawner {
       this.clearCallbacks.delete(enemy);
     }
 
-    enemy.spawn(x, ENEMY_SPAWNER.SPAWN_Y, speed, () => {
-      this.totalRecycled += 1;
-      this.notifyCleared(enemy);
+    enemy.spawn(config, {
+      x,
+      y: ENEMY_SPAWNER.SPAWN_Y,
+      getPlayerPosition: options.getPlayerPosition,
+      onOffscreenRecycle: () => {
+        this.totalRecycled += 1;
+        this.notifyCleared(enemy);
+      },
     });
 
     return enemy;
@@ -111,6 +132,36 @@ export class EnemySpawner {
         ? { x: sampleEnemy.x, y: sampleEnemy.y }
         : { x: 0, y: 0 },
     };
+  }
+
+  getTypeState(): EnemyTypeState {
+    const state: EnemyTypeState = {
+      activeBasic: 0,
+      activeShooter: 0,
+      activeCharger: 0,
+      lastSpawnedType: this.lastSpawnedType,
+    };
+
+    for (const child of this.enemies.getChildren()) {
+      const enemy = child as Enemy;
+      if (!enemy.active) {
+        continue;
+      }
+
+      switch (enemy.getType()) {
+        case 'basic':
+          state.activeBasic += 1;
+          break;
+        case 'shooter':
+          state.activeShooter += 1;
+          break;
+        case 'charger':
+          state.activeCharger += 1;
+          break;
+      }
+    }
+
+    return state;
   }
 
   private getNextSpawnX(): number {

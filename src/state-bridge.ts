@@ -51,6 +51,14 @@ export interface GameState {
     totalRecycled: number;
     maxPickups: number;
   };
+  // --- Goal 10 adds fields below this line ---
+  enemyProjectiles: { activeCount: number };
+  enemyTypes: {
+    activeBasic: number;
+    activeShooter: number;
+    activeCharger: number;
+    lastSpawnedType: string;
+  };
 }
 
 declare global {
@@ -123,6 +131,14 @@ export function updateGameState(game: Phaser.Game): void {
       totalSpawned: 0,
       totalRecycled: 0,
       maxPickups: 0,
+    },
+    // --- Goal 10 populates fields below this line ---
+    enemyProjectiles: game.registry.get('enemyProjectiles') ?? { activeCount: 0 },
+    enemyTypes: game.registry.get('enemyTypes') ?? {
+      activeBasic: 0,
+      activeShooter: 0,
+      activeCharger: 0,
+      lastSpawnedType: 'none',
     },
   };
 
