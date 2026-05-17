@@ -28,6 +28,7 @@ export interface GameState {
     samplePosition: { x: number; y: number };
   };
   // --- Goal 04 adds fields below this line ---
+  playerHealth: number;
 }
 
 declare global {
@@ -70,6 +71,7 @@ export function updateGameState(game: Phaser.Game): void {
       samplePosition: { x: 0, y: 0 },
     },
     // --- Goal 04 populates fields below this line ---
+    playerHealth: game.registry.get('playerHealth') ?? 0,
   };
 
   window.__GAME_STATE__ = state;

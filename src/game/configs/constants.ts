@@ -72,6 +72,7 @@ export const ENEMY = {
   WIDTH: 28,
   HEIGHT: 28,
   SPEED: 120,
+  SCORE_VALUE: 100,
 } as const;
 
 export const ENEMY_SPAWNER = {
@@ -82,3 +83,9 @@ export const ENEMY_SPAWNER = {
 } as const;
 
 // --- Goal 04 adds constants below this line ---
+export const PLAYER_COMBAT = {
+  STARTING_HEALTH: 3,
+  DAMAGE_PER_CONTACT: 1,
+  INVULNERABILITY_MS: 1000,
+  FLASH_INTERVAL_MS: 100,
+} as const;

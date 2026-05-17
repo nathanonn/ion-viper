@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
-import { PLAYER_SHIP, SCENE_KEYS } from '../configs/constants';
+import { PLAYER_COMBAT, PLAYER_SHIP, SCENE_KEYS } from '../configs/constants';
 import { Enemy } from '../objects/Enemy';
 import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
+import { CombatSystem } from '../systems/CombatSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
 
@@ -10,6 +11,7 @@ export class GameScene extends Phaser.Scene {
   private player!: PlayerShip;
   private playerWeapon!: PlayerWeapon;
   private enemySpawner!: EnemySpawner;
+  private combatSystem!: CombatSystem;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private wasdKeys!: {
@@ -24,6 +26,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   init(): void {
+    this.registry.set('score', 0);
+    this.registry.set('playerHealth', PLAYER_COMBAT.STARTING_HEALTH);
+    this.registry.set('gameOver', false);
     this.registry.set('playerAlive', true);
     this.registry.set('playerPosition', {
       x: PLAYER_SHIP.START_X,
@@ -42,16 +47,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.registry.set('score', 0);
-    this.registry.set('gameOver', false);
-
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
     this.playerWeapon = new PlayerWeapon(this, this.player);
     this.enemySpawner = new EnemySpawner(this);
+    this.combatSystem = new CombatSystem(this, this.player, (score) => {
+      this.scene.start(SCENE_KEYS.GAME_OVER, { score });
+    });
     this.physics.add.overlap(
       this.playerWeapon.getGroup(),
       this.enemySpawner.getGroup(),
       this.handleBulletEnemyOverlap,
+      undefined,
+      this
+    );
+    this.physics.add.overlap(
+      this.player,
+      this.enemySpawner.getGroup(),
+      this.handlePlayerEnemyOverlap,
       undefined,
       this
     );
@@ -69,6 +81,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    this.combatSystem.updateInvulnerability(delta);
+
+    if (this.combatSystem.isGameOver()) {
+      this.publishPlayerState();
+      this.publishEnemyState();
+      return;
+    }
+
     const input: PlayerMovementInput = {
       left: this.cursors.left.isDown || this.wasdKeys.A.isDown,
       right: this.cursors.right.isDown || this.wasdKeys.D.isDown,
@@ -112,7 +132,24 @@ export class GameScene extends Phaser.Scene {
 
     bullet.recycle();
     this.enemySpawner.destroyEnemy(enemy);
+    this.combatSystem.awardEnemyKill(enemy);
     this.publishPlayerState();
     this.publishEnemyState();
+  }
+
+  private handlePlayerEnemyOverlap(
+    _playerObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile,
+    _enemyObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile
+  ): void {
+    this.combatSystem.damagePlayer();
+    this.publishPlayerState();
   }
 }

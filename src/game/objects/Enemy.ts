@@ -5,6 +5,7 @@ const ENEMY_PLACEHOLDER_TEXTURE = 'enemy-placeholder';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private offscreenRecycleCallback?: () => void;
+  readonly scoreValue = ENEMY.SCORE_VALUE;
 
   constructor(scene: Phaser.Scene, x: number = 0, y: number = 0) {
     Enemy.createPlaceholderTexture(scene);
@@ -60,6 +61,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.offscreenRecycleCallback = undefined;
     this.setActive(false);
     this.setVisible(false);
+  }
+
+  getScoreValue(): number {
+    return this.scoreValue;
   }
 
   preUpdate(time: number, delta: number): void {

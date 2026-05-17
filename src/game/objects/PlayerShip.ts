@@ -92,9 +92,18 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite {
     this.alive = isAlive;
     this.setActive(isAlive);
     this.setVisible(isAlive);
+    this.setAlpha(1);
   }
 
   isAlive(): boolean {
     return this.alive;
+  }
+
+  setDamageFlash(isDimmed: boolean): void {
+    if (!this.alive) {
+      return;
+    }
+
+    this.setAlpha(isDimmed ? 0.35 : 1);
   }
 }
