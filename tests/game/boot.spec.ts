@@ -44,6 +44,7 @@ test.describe('Game Boot', () => {
 
     const state = await getGameState(page);
     expect(state.scene).toBe('MenuScene');
+    expect(await page.title()).toBe('Ion Viper');
     await page.screenshot({ path: `${ARTIFACT_DIR}/menu.png` });
   });
 

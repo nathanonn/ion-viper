@@ -24,7 +24,8 @@ export const WORLD_BOUNDS = {
 /**
  * Game-specific labels for the foundation scenes.
  */
-export const GAME_TITLE = 'Raiden Shooter';
+export const GAME_TITLE = 'Ion Viper';
+export const GAME_DESCRIPTION = 'Raiden-style vertical shooter';
 export const MENU_START_PROMPT = 'Press SPACE to start';
 
 /**

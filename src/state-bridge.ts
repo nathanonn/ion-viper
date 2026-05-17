@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { SCENE_KEYS } from './game/configs/constants';
+import { GAME_DESCRIPTION, GAME_TITLE, SCENE_KEYS } from './game/configs/constants';
 
 /**
  * State Bridge - exposes game state to window.__GAME_STATE__ for Playwright testing.
@@ -36,6 +36,8 @@ export interface GameState {
   currentWave: number;
   waveCount: number;
   gameWon: boolean;
+  // --- Goal 08 adds fields below this line ---
+  gameIdentity: { title: string; description: string };
 }
 
 declare global {
@@ -91,6 +93,11 @@ export function updateGameState(game: Phaser.Game): void {
     currentWave: game.registry.get('currentWave') ?? 1,
     waveCount: game.registry.get('waveCount') ?? 0,
     gameWon: game.registry.get('gameWon') ?? false,
+    // --- Goal 08 populates fields below this line ---
+    gameIdentity: {
+      title: GAME_TITLE,
+      description: GAME_DESCRIPTION,
+    },
   };
 
   window.__GAME_STATE__ = state;

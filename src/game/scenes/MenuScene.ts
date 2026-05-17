@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   ASSET_KEYS,
   COLORS,
+  GAME_DESCRIPTION,
   GAME_HEIGHT,
   GAME_TITLE,
   GAME_WIDTH,
@@ -26,6 +27,14 @@ export class MenuScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, GAME_TITLE, {
         fontSize: '48px',
         color: TEXT_COLORS.PRIMARY,
+        fontFamily: 'monospace',
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, GAME_DESCRIPTION, {
+        fontSize: '16px',
+        color: TEXT_COLORS.SECONDARY,
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);
