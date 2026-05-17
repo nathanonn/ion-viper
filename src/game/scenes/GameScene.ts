@@ -1,11 +1,15 @@
 import Phaser from 'phaser';
 import { PLAYER_SHIP, SCENE_KEYS } from '../configs/constants';
+import { Enemy } from '../objects/Enemy';
+import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
+import { EnemySpawner } from '../systems/EnemySpawner';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
 
 export class GameScene extends Phaser.Scene {
   private player!: PlayerShip;
   private playerWeapon!: PlayerWeapon;
+  private enemySpawner!: EnemySpawner;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private wasdKeys!: {
@@ -26,6 +30,15 @@ export class GameScene extends Phaser.Scene {
       y: PLAYER_SHIP.START_Y,
     });
     this.registry.set('playerBullets', { activeCount: 0 });
+    this.registry.set('enemies', {
+      activeCount: 0,
+      totalDestroyed: 0,
+      totalSpawned: 0,
+      totalRecycled: 0,
+      lastSpawnX: 0,
+      previousSpawnX: 0,
+      samplePosition: { x: 0, y: 0 },
+    });
   }
 
   create(): void {
@@ -34,6 +47,14 @@ export class GameScene extends Phaser.Scene {
 
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
     this.playerWeapon = new PlayerWeapon(this, this.player);
+    this.enemySpawner = new EnemySpawner(this);
+    this.physics.add.overlap(
+      this.playerWeapon.getGroup(),
+      this.enemySpawner.getGroup(),
+      this.handleBulletEnemyOverlap,
+      undefined,
+      this
+    );
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.spaceKey.reset();
@@ -57,7 +78,9 @@ export class GameScene extends Phaser.Scene {
 
     this.player.moveFromInput(input, delta);
     this.playerWeapon.update(_time, this.spaceKey.isDown);
+    this.enemySpawner.update(delta);
     this.publishPlayerState();
+    this.publishEnemyState();
   }
 
   private publishPlayerState(): void {
@@ -66,5 +89,30 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('playerBullets', {
       activeCount: this.playerWeapon.getActiveCount(),
     });
+  }
+
+  private publishEnemyState(): void {
+    this.registry.set('enemies', this.enemySpawner.getState());
+  }
+
+  private handleBulletEnemyOverlap(
+    bulletObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile,
+    enemyObject:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Physics.Arcade.StaticBody
+      | Phaser.Tilemaps.Tile
+  ): void {
+    const bullet = bulletObject as PlayerBullet;
+    const enemy = enemyObject as Enemy;
+
+    bullet.recycle();
+    this.enemySpawner.destroyEnemy(enemy);
+    this.publishPlayerState();
+    this.publishEnemyState();
   }
 }

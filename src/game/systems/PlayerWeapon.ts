@@ -43,4 +43,8 @@ export class PlayerWeapon {
   getActiveCount(): number {
     return this.bullets.countActive(true);
   }
+
+  getGroup(): Phaser.Physics.Arcade.Group {
+    return this.bullets;
+  }
 }

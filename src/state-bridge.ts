@@ -18,6 +18,15 @@ export interface GameState {
   // --- Goal 02 adds fields below this line ---
   playerBullets: { activeCount: number };
   // --- Goal 03 adds fields below this line ---
+  enemies: {
+    activeCount: number;
+    totalDestroyed: number;
+    totalSpawned: number;
+    totalRecycled: number;
+    lastSpawnX: number;
+    previousSpawnX: number;
+    samplePosition: { x: number; y: number };
+  };
   // --- Goal 04 adds fields below this line ---
 }
 
@@ -51,6 +60,15 @@ export function updateGameState(game: Phaser.Game): void {
     // --- Goal 02 populates fields below this line ---
     playerBullets: game.registry.get('playerBullets') ?? { activeCount: 0 },
     // --- Goal 03 populates fields below this line ---
+    enemies: game.registry.get('enemies') ?? {
+      activeCount: 0,
+      totalDestroyed: 0,
+      totalSpawned: 0,
+      totalRecycled: 0,
+      lastSpawnX: 0,
+      previousSpawnX: 0,
+      samplePosition: { x: 0, y: 0 },
+    },
     // --- Goal 04 populates fields below this line ---
   };
 

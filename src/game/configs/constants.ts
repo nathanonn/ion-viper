@@ -68,4 +68,17 @@ export const PLAYER_WEAPON = {
 } as const;
 
 // --- Goal 03 adds constants below this line ---
+export const ENEMY = {
+  WIDTH: 28,
+  HEIGHT: 28,
+  SPEED: 120,
+} as const;
+
+export const ENEMY_SPAWNER = {
+  SPAWN_INTERVAL_MS: 500,
+  MAX_ENEMIES: 12,
+  SPAWN_Y: -ENEMY.HEIGHT / 2,
+  SPAWN_X_POSITIONS: [GAME_WIDTH / 2, 160, 640, 280, 520],
+} as const;
+
 // --- Goal 04 adds constants below this line ---
