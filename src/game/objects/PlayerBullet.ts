@@ -1,27 +1,12 @@
 import Phaser from 'phaser';
-import { COLORS, PLAYER_BULLET } from '../configs/constants';
-
-const PLAYER_BULLET_TEXTURE = 'player-bullet-placeholder';
+import { ASSET_KEYS, PLAYER_BULLET } from '../configs/constants';
 
 export class PlayerBullet extends Phaser.Physics.Arcade.Sprite {
   constructor(scene: Phaser.Scene, x: number = 0, y: number = 0) {
-    PlayerBullet.createPlaceholderTexture(scene);
-    super(scene, x, y, PLAYER_BULLET_TEXTURE);
+    super(scene, x, y, ASSET_KEYS.IMAGES.PLAYER_BULLET);
 
     this.setOrigin(0.5);
     this.setDisplaySize(PLAYER_BULLET.WIDTH, PLAYER_BULLET.HEIGHT);
-  }
-
-  static createPlaceholderTexture(scene: Phaser.Scene): void {
-    if (scene.textures.exists(PLAYER_BULLET_TEXTURE)) {
-      return;
-    }
-
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(COLORS.BULLET, 1);
-    graphics.fillRect(0, 0, PLAYER_BULLET.WIDTH, PLAYER_BULLET.HEIGHT);
-    graphics.generateTexture(PLAYER_BULLET_TEXTURE, PLAYER_BULLET.WIDTH, PLAYER_BULLET.HEIGHT);
-    graphics.destroy();
   }
 
   fire(x: number, y: number): void {

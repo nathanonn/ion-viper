@@ -29,8 +29,6 @@ export class EnemySpawner {
   private readonly clearCallbacks = new Map<Enemy, () => void>();
 
   constructor(private readonly scene: Phaser.Scene) {
-    Enemy.createPlaceholderTexture(scene);
-
     this.enemies = scene.physics.add.group({
       classType: Enemy,
       maxSize: ENEMY_SPAWNER.MAX_ENEMIES,

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, PLAYER_SHIP } from '../configs/constants';
+import { ASSET_KEYS, GAME_HEIGHT, GAME_WIDTH, PLAYER_SHIP } from '../configs/constants';
 
 export interface PlayerMovementInput {
   left: boolean;
@@ -8,14 +8,11 @@ export interface PlayerMovementInput {
   down: boolean;
 }
 
-const PLAYER_PLACEHOLDER_TEXTURE = 'player-placeholder';
-
 export class PlayerShip extends Phaser.Physics.Arcade.Sprite {
   private alive = true;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    PlayerShip.createPlaceholderTexture(scene);
-    super(scene, x, y, PLAYER_PLACEHOLDER_TEXTURE);
+    super(scene, x, y, ASSET_KEYS.IMAGES.PLAYER_SHIP);
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -27,21 +24,6 @@ export class PlayerShip extends Phaser.Physics.Arcade.Sprite {
     body.setAllowGravity(false);
     body.setSize(PLAYER_SHIP.WIDTH, PLAYER_SHIP.HEIGHT);
     body.setCollideWorldBounds(false);
-  }
-
-  static createPlaceholderTexture(scene: Phaser.Scene): void {
-    if (scene.textures.exists(PLAYER_PLACEHOLDER_TEXTURE)) {
-      return;
-    }
-
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(COLORS.PLAYER, 1);
-    graphics.fillTriangle(PLAYER_SHIP.WIDTH / 2, 0, PLAYER_SHIP.WIDTH - 1, PLAYER_SHIP.HEIGHT - 1, PLAYER_SHIP.WIDTH / 2, 24);
-    graphics.fillTriangle(PLAYER_SHIP.WIDTH / 2, 0, 1, PLAYER_SHIP.HEIGHT - 1, PLAYER_SHIP.WIDTH / 2, 24);
-    graphics.fillStyle(COLORS.ACCENT, 1);
-    graphics.fillRect(13, 20, 6, 8);
-    graphics.generateTexture(PLAYER_PLACEHOLDER_TEXTURE, PLAYER_SHIP.WIDTH, PLAYER_SHIP.HEIGHT);
-    graphics.destroy();
   }
 
   moveFromInput(input: PlayerMovementInput, delta: number): void {

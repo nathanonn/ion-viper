@@ -8,8 +8,6 @@ export class PlayerWeapon {
   private nextFireAt = 0;
 
   constructor(private readonly scene: Phaser.Scene, private readonly player: PlayerShip) {
-    PlayerBullet.createPlaceholderTexture(scene);
-
     this.bullets = scene.physics.add.group({
       classType: PlayerBullet,
       maxSize: PLAYER_WEAPON.MAX_BULLETS,
@@ -34,10 +32,12 @@ export class PlayerWeapon {
     return true;
   }
 
-  update(time: number, isFiring: boolean): void {
+  update(time: number, isFiring: boolean): boolean {
     if (isFiring) {
-      this.tryFire(time);
+      return this.tryFire(time);
     }
+
+    return false;
   }
 
   getActiveCount(): number {

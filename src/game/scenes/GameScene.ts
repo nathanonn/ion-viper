@@ -1,11 +1,20 @@
 import Phaser from 'phaser';
-import { PLAYER_COMBAT, PLAYER_SHIP, SCENE_KEYS } from '../configs/constants';
+import {
+  ASSET_KEYS,
+  GAME_HEIGHT,
+  GAME_WIDTH,
+  PLAYER_COMBAT,
+  PLAYER_SHIP,
+  POLISH,
+  SCENE_KEYS,
+} from '../configs/constants';
 import { WAVE_CONFIGS } from '../data/waves';
 import { Enemy } from '../objects/Enemy';
 import { PlayerBullet } from '../objects/PlayerBullet';
 import { PlayerShip, type PlayerMovementInput } from '../objects/PlayerShip';
 import { CombatSystem } from '../systems/CombatSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
+import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
 import { WaveSystem } from '../systems/WaveSystem';
 
@@ -15,6 +24,9 @@ export class GameScene extends Phaser.Scene {
   private enemySpawner!: EnemySpawner;
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
+  private feedbackSystem!: FeedbackSystem;
+  private background!: Phaser.GameObjects.Image;
+  private starParallax!: Phaser.GameObjects.TileSprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private wasdKeys!: {
@@ -53,6 +65,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.background = this.add
+      .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, ASSET_KEYS.IMAGES.SPACE_BACKGROUND)
+      .setDepth(-20);
+    this.starParallax = this.add
+      .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, ASSET_KEYS.IMAGES.STAR_PARALLAX)
+      .setOrigin(0)
+      .setDepth(-10)
+      .setAlpha(0.72);
+
+    this.feedbackSystem = new FeedbackSystem(this);
+    this.feedbackSystem.create();
+    this.feedbackSystem.startMusic();
+
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
     this.playerWeapon = new PlayerWeapon(this, this.player);
     this.enemySpawner = new EnemySpawner(this);
@@ -100,9 +125,13 @@ export class GameScene extends Phaser.Scene {
     this.publishPlayerState();
     this.publishWaveState();
     this.scene.launch(SCENE_KEYS.HUD);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.feedbackSystem.stopMusic();
+    });
   }
 
   update(_time: number, delta: number): void {
+    this.starParallax.tilePositionY -= POLISH.STAR_SCROLL_SPEED * (delta / 1000);
     this.combatSystem.updateInvulnerability(delta);
 
     if (this.combatSystem.isGameOver()) {
@@ -119,7 +148,10 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.player.moveFromInput(input, delta);
-    this.playerWeapon.update(_time, this.spaceKey.isDown);
+    const didFire = this.playerWeapon.update(_time, this.spaceKey.isDown);
+    if (didFire) {
+      this.feedbackSystem.playerFired();
+    }
     this.waveSystem.update(delta);
     this.publishPlayerState();
     this.publishEnemyState();
@@ -161,8 +193,11 @@ export class GameScene extends Phaser.Scene {
     const enemy = enemyObject as Enemy;
 
     bullet.recycle();
+    const impactX = enemy.x;
+    const impactY = enemy.y;
     const didDestroy = this.enemySpawner.destroyEnemy(enemy);
     if (didDestroy) {
+      this.feedbackSystem.enemyDestroyed(impactX, impactY);
       this.combatSystem.awardEnemyKill(enemy);
     }
     this.publishPlayerState();
@@ -182,7 +217,10 @@ export class GameScene extends Phaser.Scene {
       | Phaser.Physics.Arcade.StaticBody
       | Phaser.Tilemaps.Tile
   ): void {
-    this.combatSystem.damagePlayer();
+    const didDamage = this.combatSystem.damagePlayer();
+    if (didDamage) {
+      this.feedbackSystem.playerDamaged(this.player.x, this.player.y);
+    }
     this.publishPlayerState();
   }
 }

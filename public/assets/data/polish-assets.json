@@ -1,0 +1,100 @@
+{
+  "imagegenSession": "019e342b-0c62-7373-88bd-c25682955491",
+  "stylePrefix": "pixel art vertical arcade shooter, crisp 16-bit inspired sprites, readable silhouettes",
+  "generatedSources": {
+    "player-ship-source.png": "/home/pi/.codex/generated_images/019e342b-0c62-7373-88bd-c25682955491/ig_0de8f28beca82394016a0942b7c41081919af1890835ddfe75.png",
+    "enemy-drone-source.png": "/home/pi/.codex/generated_images/019e342b-0c62-7373-88bd-c25682955491/ig_0de8f28beca82394016a0942eab01c8191b8386afbfb0f0bcd.png",
+    "space-background-source.png": "/home/pi/.codex/generated_images/019e342b-0c62-7373-88bd-c25682955491/ig_0de8f28beca82394016a09431ac1f08191ab9e102b293279e5.png"
+  },
+  "processedAssets": {
+    "playerShip": {
+      "path": "public/assets/images/player-ship.png",
+      "size": [
+        32,
+        32
+      ],
+      "nonTransparentPixels": 350,
+      "transparentCorners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source": "$imagegen, magenta chromakey, downscaled to 32x32"
+    },
+    "enemyDrone": {
+      "path": "public/assets/images/enemy-drone.png",
+      "size": [
+        28,
+        28
+      ],
+      "nonTransparentPixels": 379,
+      "transparentCorners": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source": "$imagegen, magenta chromakey, downscaled to 28x28"
+    },
+    "background": {
+      "path": "public/assets/images/space-background.png",
+      "size": [
+        800,
+        600
+      ],
+      "source": "$imagegen, cover-cropped"
+    },
+    "playerBullet": {
+      "path": "public/assets/images/player-bullet.png",
+      "size": [
+        4,
+        12
+      ],
+      "source": "hand-authored pixel PNG"
+    },
+    "explosionParticle": {
+      "path": "public/assets/images/explosion-particle.png",
+      "size": [
+        8,
+        8
+      ],
+      "source": "hand-authored pixel PNG"
+    },
+    "starParallax": {
+      "path": "public/assets/images/star-parallax.png",
+      "size": [
+        128,
+        128
+      ],
+      "source": "hand-authored pixel PNG"
+    }
+  },
+  "audioAssets": {
+    "fire": {
+      "path": "public/assets/audio/fire.wav",
+      "durationSeconds": 0.16,
+      "source": "locally synthesized"
+    },
+    "hit": {
+      "path": "public/assets/audio/hit.wav",
+      "durationSeconds": 0.22,
+      "source": "locally synthesized"
+    },
+    "explosion": {
+      "path": "public/assets/audio/explosion.wav",
+      "durationSeconds": 0.85,
+      "source": "locally synthesized"
+    },
+    "playerDamage": {
+      "path": "public/assets/audio/player-damage.wav",
+      "durationSeconds": 0.38,
+      "source": "locally synthesized"
+    },
+    "gameplayMusic": {
+      "path": "public/assets/audio/gameplay-loop.wav",
+      "durationSeconds": 8.0,
+      "source": "locally synthesized WAV loop"
+    }
+  }
+}

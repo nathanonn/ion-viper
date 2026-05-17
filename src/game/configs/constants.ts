@@ -45,6 +45,54 @@ export const TEXT_COLORS = {
   SECONDARY: '#aaaaaa',
 } as const;
 
+export const ASSET_KEYS = {
+  IMAGES: {
+    PLAYER_SHIP: 'player-ship',
+    ENEMY_DRONE: 'enemy-drone',
+    PLAYER_BULLET: 'player-bullet',
+    EXPLOSION_PARTICLE: 'explosion-particle',
+    SPACE_BACKGROUND: 'space-background',
+    STAR_PARALLAX: 'star-parallax',
+  },
+  AUDIO: {
+    FIRE: 'fire-sfx',
+    HIT: 'hit-sfx',
+    EXPLOSION: 'explosion-sfx',
+    PLAYER_DAMAGE: 'player-damage-sfx',
+    MUSIC: 'gameplay-music',
+  },
+} as const;
+
+export const ASSET_PATHS = {
+  IMAGES: {
+    PLAYER_SHIP: 'assets/images/player-ship.png',
+    ENEMY_DRONE: 'assets/images/enemy-drone.png',
+    PLAYER_BULLET: 'assets/images/player-bullet.png',
+    EXPLOSION_PARTICLE: 'assets/images/explosion-particle.png',
+    SPACE_BACKGROUND: 'assets/images/space-background.png',
+    STAR_PARALLAX: 'assets/images/star-parallax.png',
+  },
+  AUDIO: {
+    FIRE: 'assets/audio/fire.wav',
+    HIT: 'assets/audio/hit.wav',
+    EXPLOSION: 'assets/audio/explosion.wav',
+    PLAYER_DAMAGE: 'assets/audio/player-damage.wav',
+    MUSIC: 'assets/audio/gameplay-loop.wav',
+  },
+} as const;
+
+export const POLISH = {
+  BACKGROUND_SCROLL_SPEED: 18,
+  STAR_SCROLL_SPEED: 56,
+  SHAKE_DURATION_MS: 150,
+  SHAKE_INTENSITY: 0.006,
+  FIRE_VOLUME: 0.22,
+  HIT_VOLUME: 0.25,
+  EXPLOSION_VOLUME: 0.42,
+  DAMAGE_VOLUME: 0.36,
+  MUSIC_VOLUME: 0.16,
+} as const;
+
 // --- Goal 00 adds constants below this line ---
 // --- Goal 01 adds constants below this line ---
 export const PLAYER_SHIP = {

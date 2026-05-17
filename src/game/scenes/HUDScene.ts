@@ -5,6 +5,9 @@ export class HUDScene extends Phaser.Scene {
   private scoreText: Phaser.GameObjects.Text | null = null;
   private healthText: Phaser.GameObjects.Text | null = null;
   private waveText: Phaser.GameObjects.Text | null = null;
+  private lastScoreText = '';
+  private lastHealthText = '';
+  private lastWaveText = '';
 
   constructor() {
     super({ key: SCENE_KEYS.HUD });
@@ -14,6 +17,9 @@ export class HUDScene extends Phaser.Scene {
     this.scoreText = null;
     this.healthText = null;
     this.waveText = null;
+    this.lastScoreText = '';
+    this.lastHealthText = '';
+    this.lastWaveText = '';
   }
 
   create(): void {
@@ -55,8 +61,21 @@ export class HUDScene extends Phaser.Scene {
     const waveCount = this.registry.get('waveCount') ?? 1;
     const gameWon = this.registry.get('gameWon') ?? false;
 
-    this.scoreText?.setText(`Score: ${score}`);
-    this.healthText?.setText(`Health: ${health}`);
-    this.waveText?.setText(gameWon ? 'Victory!' : `Wave: ${currentWave}/${waveCount}`);
+    const nextScoreText = `Score: ${score}`;
+    const nextHealthText = `Health: ${health}`;
+    const nextWaveText = gameWon ? 'Victory!' : `Wave: ${currentWave}/${waveCount}`;
+
+    if (nextScoreText !== this.lastScoreText) {
+      this.scoreText?.setText(nextScoreText);
+      this.lastScoreText = nextScoreText;
+    }
+    if (nextHealthText !== this.lastHealthText) {
+      this.healthText?.setText(nextHealthText);
+      this.lastHealthText = nextHealthText;
+    }
+    if (nextWaveText !== this.lastWaveText) {
+      this.waveText?.setText(nextWaveText);
+      this.lastWaveText = nextWaveText;
+    }
   }
 }
