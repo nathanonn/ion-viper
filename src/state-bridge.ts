@@ -38,6 +38,19 @@ export interface GameState {
   gameWon: boolean;
   // --- Goal 08 adds fields below this line ---
   gameIdentity: { title: string; description: string };
+  // --- Goal 09 adds fields below this line ---
+  ionBlast: {
+    active: boolean;
+    remainingMs: number;
+    collectedCount: number;
+    projectileCount: number;
+    pickupActive: boolean;
+    pickupPosition: { x: number; y: number };
+    poolActiveCount: number;
+    totalSpawned: number;
+    totalRecycled: number;
+    maxPickups: number;
+  };
 }
 
 declare global {
@@ -97,6 +110,19 @@ export function updateGameState(game: Phaser.Game): void {
     gameIdentity: {
       title: GAME_TITLE,
       description: GAME_DESCRIPTION,
+    },
+    // --- Goal 09 populates fields below this line ---
+    ionBlast: game.registry.get('ionBlast') ?? {
+      active: false,
+      remainingMs: 0,
+      collectedCount: 0,
+      projectileCount: 1,
+      pickupActive: false,
+      pickupPosition: { x: 0, y: 0 },
+      poolActiveCount: 0,
+      totalSpawned: 0,
+      totalRecycled: 0,
+      maxPickups: 0,
     },
   };
 

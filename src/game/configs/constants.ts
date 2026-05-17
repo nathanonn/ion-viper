@@ -51,6 +51,7 @@ export const ASSET_KEYS = {
     PLAYER_SHIP: 'player-ship',
     ENEMY_DRONE: 'enemy-drone',
     PLAYER_BULLET: 'player-bullet',
+    ION_BLAST_PICKUP: 'ion-blast-pickup',
     EXPLOSION_PARTICLE: 'explosion-particle',
     SPACE_BACKGROUND: 'space-background',
     STAR_PARALLAX: 'star-parallax',
@@ -114,6 +115,19 @@ export const PLAYER_BULLET = {
 export const PLAYER_WEAPON = {
   FIRE_INTERVAL_MS: 150,
   MAX_BULLETS: 8,
+  ION_BLAST_PROJECTILE_COUNT: 3,
+} as const;
+
+export const ION_BLAST = {
+  WIDTH: 20,
+  HEIGHT: 20,
+  SPEED: 240,
+  MAX_PICKUPS: 2,
+  SPAWN_DELAY_MS: 750,
+  SPAWN_INTERVAL_MS: 5000,
+  DURATION_MS: 1800,
+  SPAWN_Y: -10,
+  SPAWN_X_POSITIONS: [280, 400, 520],
 } as const;
 
 // --- Goal 03 adds constants below this line ---

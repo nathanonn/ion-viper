@@ -9,7 +9,7 @@ export class PlayerBullet extends Phaser.Physics.Arcade.Sprite {
     this.setDisplaySize(PLAYER_BULLET.WIDTH, PLAYER_BULLET.HEIGHT);
   }
 
-  fire(x: number, y: number): void {
+  fire(x: number, y: number, velocityX: number = 0): void {
     this.setActive(true);
     this.setVisible(true);
 
@@ -18,7 +18,7 @@ export class PlayerBullet extends Phaser.Physics.Arcade.Sprite {
     body.setAllowGravity(false);
     body.setSize(PLAYER_BULLET.WIDTH, PLAYER_BULLET.HEIGHT);
     body.reset(x, y);
-    body.setVelocity(0, -PLAYER_BULLET.SPEED);
+    body.setVelocity(velocityX, -PLAYER_BULLET.SPEED);
   }
 
   recycle(): void {

@@ -16,6 +16,7 @@ import { CombatSystem } from '../systems/CombatSystem';
 import { EnemySpawner } from '../systems/EnemySpawner';
 import { FeedbackSystem } from '../systems/FeedbackSystem';
 import { PlayerWeapon } from '../systems/PlayerWeapon';
+import { PowerUpSystem } from '../systems/PowerUpSystem';
 import { WaveSystem } from '../systems/WaveSystem';
 
 export class GameScene extends Phaser.Scene {
@@ -25,6 +26,7 @@ export class GameScene extends Phaser.Scene {
   private combatSystem!: CombatSystem;
   private waveSystem!: WaveSystem;
   private feedbackSystem!: FeedbackSystem;
+  private powerUpSystem!: PowerUpSystem;
   private background!: Phaser.GameObjects.Image;
   private starParallax!: Phaser.GameObjects.TileSprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -53,6 +55,18 @@ export class GameScene extends Phaser.Scene {
       y: PLAYER_SHIP.START_Y,
     });
     this.registry.set('playerBullets', { activeCount: 0 });
+    this.registry.set('ionBlast', {
+      active: false,
+      remainingMs: 0,
+      collectedCount: 0,
+      projectileCount: 1,
+      pickupActive: false,
+      pickupPosition: { x: 0, y: 0 },
+      poolActiveCount: 0,
+      totalSpawned: 0,
+      totalRecycled: 0,
+      maxPickups: 0,
+    });
     this.registry.set('enemies', {
       activeCount: 0,
       totalDestroyed: 0,
@@ -79,7 +93,11 @@ export class GameScene extends Phaser.Scene {
     this.feedbackSystem.startMusic();
 
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
-    this.playerWeapon = new PlayerWeapon(this, this.player);
+    this.powerUpSystem = new PowerUpSystem(this);
+    this.powerUpSystem.start();
+    this.playerWeapon = new PlayerWeapon(this, this.player, () =>
+      this.powerUpSystem.getProjectileCount()
+    );
     this.enemySpawner = new EnemySpawner(this);
     this.waveSystem = new WaveSystem(WAVE_CONFIGS, (wave) => {
       const enemy = this.enemySpawner.spawnEnemy({
@@ -112,6 +130,13 @@ export class GameScene extends Phaser.Scene {
       undefined,
       this
     );
+    this.physics.add.overlap(
+      this.player,
+      this.powerUpSystem.getGroup(),
+      this.powerUpSystem.handlePlayerOverlap,
+      undefined,
+      this.powerUpSystem
+    );
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.spaceKey.reset();
@@ -123,6 +148,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.publishPlayerState();
+    this.publishIonBlastState();
     this.publishWaveState();
     this.scene.launch(SCENE_KEYS.HUD);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -148,6 +174,7 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.player.moveFromInput(input, delta);
+    this.powerUpSystem.update(delta);
     const didFire = this.playerWeapon.update(_time, this.spaceKey.isDown);
     if (didFire) {
       this.feedbackSystem.playerFired();
@@ -155,6 +182,7 @@ export class GameScene extends Phaser.Scene {
     this.waveSystem.update(delta);
     this.publishPlayerState();
     this.publishEnemyState();
+    this.publishIonBlastState();
     this.publishWaveState();
   }
 
@@ -175,6 +203,10 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('currentWave', waveState.currentWave);
     this.registry.set('waveCount', waveState.waveCount);
     this.registry.set('gameWon', waveState.gameWon);
+  }
+
+  private publishIonBlastState(): void {
+    this.registry.set('ionBlast', this.powerUpSystem.getState());
   }
 
   private handleBulletEnemyOverlap(
