@@ -20,7 +20,7 @@ export class PlayerWeapon {
     this.prewarmBullets();
   }
 
-  tryFire(time: number): boolean {
+  tryFire(time: number, fireIntervalMs: number = PLAYER_WEAPON.FIRE_INTERVAL_MS): boolean {
     if (time < this.nextFireAt || !this.player.isAlive()) {
       return false;
     }
@@ -36,7 +36,7 @@ export class PlayerWeapon {
       return false;
     }
 
-    this.nextFireAt = time + PLAYER_WEAPON.FIRE_INTERVAL_MS;
+    this.nextFireAt = time + fireIntervalMs;
     return true;
   }
 

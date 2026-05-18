@@ -29,7 +29,7 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
     body.enable = true;
     body.setAllowGravity(false);
     body.setImmovable(true);
-    body.setSize(BOSS.WIDTH, BOSS.HEIGHT);
+    body.setSize(BOSS.WIDTH / this.scaleX, BOSS.HEIGHT / this.scaleY);
     body.reset(BOSS.START_X, BOSS.START_Y);
     body.setVelocity(0, 0);
   }

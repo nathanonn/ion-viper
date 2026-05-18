@@ -68,6 +68,15 @@ export class EnemyProjectileSystem {
     return this.projectiles;
   }
 
+  recycleAll(): void {
+    for (const child of this.projectiles.getChildren()) {
+      const projectile = child as EnemyProjectile;
+      if (projectile.active) {
+        projectile.recycle();
+      }
+    }
+  }
+
   private prewarmProjectiles(): void {
     for (let i = 0; i < ENEMY_PROJECTILE.MAX_PROJECTILES; i += 1) {
       const projectile = this.projectiles.create(0, 0, ASSET_KEYS.IMAGES.PLAYER_BULLET) as

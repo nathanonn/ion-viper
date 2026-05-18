@@ -4,6 +4,7 @@ import {
   GAME_HEIGHT,
   GAME_WIDTH,
   PLAYER_COMBAT,
+  PLAYER_WEAPON,
   PLAYER_SHIP,
   POLISH,
   SCENE_KEYS,
@@ -51,6 +52,7 @@ export class GameScene extends Phaser.Scene {
     S: Phaser.Input.Keyboard.Key;
     D: Phaser.Input.Keyboard.Key;
   };
+  private fireInputArmed = false;
 
   constructor() {
     super({ key: SCENE_KEYS.GAME });
@@ -132,7 +134,7 @@ export class GameScene extends Phaser.Scene {
     this.feedbackSystem.startMusic();
 
     this.player = new PlayerShip(this, PLAYER_SHIP.START_X, PLAYER_SHIP.START_Y);
-    this.powerUpSystem = new PowerUpSystem(this);
+    this.powerUpSystem = new PowerUpSystem(this, this.player);
     this.powerUpSystem.start();
     this.playerWeapon = new PlayerWeapon(this, this.player, () =>
       this.powerUpSystem.getProjectileCount()
@@ -154,6 +156,9 @@ export class GameScene extends Phaser.Scene {
           getPlayerPosition: () => this.player.getPosition(),
           onCleared: () => {
             this.waveSystem.onEnemyCleared();
+            if (this.enemySpawner.getActiveCount() === 0) {
+              this.enemyProjectileSystem.recycleAll();
+            }
             this.publishWaveState();
             this.publishEnemyState();
             this.publishRandomizationState();
@@ -180,8 +185,8 @@ export class GameScene extends Phaser.Scene {
       this
     );
     this.physics.add.overlap(
-      this.playerWeapon.getGroup(),
       this.bossSystem.getBoss(),
+      this.playerWeapon.getGroup(),
       this.handleBulletBossOverlap,
       undefined,
       this
@@ -210,6 +215,10 @@ export class GameScene extends Phaser.Scene {
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.spaceKey.reset();
+    this.fireInputArmed = false;
+    this.spaceKey.once('up', this.armFireInput, this);
+    this.time.delayedCall(180, this.armFireInput, [], this);
+    this.spaceKey.on('down', this.handleSpaceDown, this);
     this.wasdKeys = this.input.keyboard!.addKeys('W,A,S,D') as {
       W: Phaser.Input.Keyboard.Key;
       A: Phaser.Input.Keyboard.Key;
@@ -225,6 +234,8 @@ export class GameScene extends Phaser.Scene {
     this.publishDifficultyState();
     this.scene.launch(SCENE_KEYS.HUD);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.spaceKey.off('up', this.armFireInput, this);
+      this.spaceKey.off('down', this.handleSpaceDown, this);
       this.feedbackSystem.stopMusic();
     });
   }
@@ -249,7 +260,8 @@ export class GameScene extends Phaser.Scene {
 
     this.player.moveFromInput(input, delta);
     this.powerUpSystem.update(delta);
-    const didFire = this.playerWeapon.update(_time, this.spaceKey.isDown);
+    const isFiring = this.isFireInputActive();
+    const didFire = this.playerWeapon.update(_time, isFiring);
     if (didFire) {
       this.feedbackSystem.playerFired();
     }
@@ -303,6 +315,29 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('difficulty', this.difficultySystem.getState());
   }
 
+  private handleSpaceDown(): void {
+    if (!this.fireInputArmed || this.combatSystem.isGameOver()) {
+      return;
+    }
+
+    const didFire = this.playerWeapon.tryFire(
+      this.time.now,
+      PLAYER_WEAPON.FIRE_INTERVAL_MS * 2
+    );
+    if (didFire) {
+      this.feedbackSystem.playerFired();
+      this.publishPlayerState();
+    }
+  }
+
+  private armFireInput(): void {
+    this.fireInputArmed = true;
+  }
+
+  private isFireInputActive(): boolean {
+    return this.fireInputArmed && this.spaceKey.isDown;
+  }
+
   private handleBulletEnemyOverlap(
     bulletObject:
       | Phaser.Types.Physics.Arcade.GameObjectWithBody
@@ -336,19 +371,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleBulletBossOverlap(
-    bulletObject:
+    bossObject:
       | Phaser.Types.Physics.Arcade.GameObjectWithBody
       | Phaser.Physics.Arcade.Body
       | Phaser.Physics.Arcade.StaticBody
       | Phaser.Tilemaps.Tile,
-    bossObject:
+    bulletObject:
       | Phaser.Types.Physics.Arcade.GameObjectWithBody
       | Phaser.Physics.Arcade.Body
       | Phaser.Physics.Arcade.StaticBody
       | Phaser.Tilemaps.Tile
   ): void {
-    const bullet = bulletObject as PlayerBullet;
     const boss = bossObject as Boss;
+    const bullet = bulletObject as PlayerBullet;
     const impactX = boss.x;
     const impactY = boss.y;
 

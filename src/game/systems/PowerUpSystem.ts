@@ -7,6 +7,7 @@ import {
   PLAYER_WEAPON,
 } from '../configs/constants';
 import { IonBlastPickup } from '../objects/IonBlastPickup';
+import type { PlayerShip } from '../objects/PlayerShip';
 
 export interface IonBlastState {
   active: boolean;
@@ -31,7 +32,10 @@ export class PowerUpSystem {
   private totalSpawned = 0;
   private totalRecycled = 0;
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly player?: PlayerShip
+  ) {
     this.ensurePickupTexture();
     this.pickups = scene.physics.add.group({
       classType: IonBlastPickup,
@@ -56,6 +60,7 @@ export class PowerUpSystem {
     this.updateTimer(delta);
     this.recycleOffscreenPickups();
     this.updateSpawn(delta);
+    this.collectOverlappingPickups();
   }
 
   handlePlayerOverlap(
@@ -76,9 +81,7 @@ export class PowerUpSystem {
       return;
     }
 
-    pickup.recycle();
-    this.totalRecycled += 1;
-    this.activateIonBlast();
+    this.collectPickup(pickup);
   }
 
   activateIonBlast(): void {
@@ -168,6 +171,33 @@ export class PowerUpSystem {
     for (const child of this.pickups.getChildren()) {
       (child as IonBlastPickup).recycle();
     }
+  }
+
+  private collectOverlappingPickups(): void {
+    if (!this.player?.active) {
+      return;
+    }
+
+    const playerBounds = this.player.getBounds();
+    for (const child of this.pickups.getChildren()) {
+      const pickup = child as IonBlastPickup;
+      if (
+        pickup.active &&
+        Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, pickup.getBounds())
+      ) {
+        this.collectPickup(pickup);
+      }
+    }
+  }
+
+  private collectPickup(pickup: IonBlastPickup): void {
+    if (!pickup.active) {
+      return;
+    }
+
+    pickup.recycle();
+    this.totalRecycled += 1;
+    this.activateIonBlast();
   }
 
   private prewarmPickups(): void {

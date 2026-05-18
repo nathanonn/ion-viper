@@ -17,6 +17,45 @@ export class GameOverScene extends Phaser.Scene {
   create(): void {
     this.scene.stop(SCENE_KEYS.HUD);
     this.registry.set('gameOver', true);
+    this.registry.set('gameWon', false);
+    this.registry.set('victoryVisible', false);
+    this.registry.set('playerAlive', false);
+    this.registry.set('playerBullets', { activeCount: 0 });
+    this.registry.set('enemyProjectiles', { activeCount: 0 });
+    this.registry.set('enemies', {
+      activeCount: 0,
+      totalDestroyed: this.registry.get('enemies')?.totalDestroyed ?? 0,
+      totalSpawned: this.registry.get('enemies')?.totalSpawned ?? 0,
+      totalRecycled: this.registry.get('enemies')?.totalRecycled ?? 0,
+      lastSpawnX: this.registry.get('enemies')?.lastSpawnX ?? 0,
+      previousSpawnX: this.registry.get('enemies')?.previousSpawnX ?? 0,
+      samplePosition: { x: 0, y: 0 },
+    });
+    this.registry.set('enemyTypes', {
+      activeBasic: 0,
+      activeShooter: 0,
+      activeCharger: 0,
+      lastSpawnedType: this.registry.get('enemyTypes')?.lastSpawnedType ?? 'none',
+    });
+    this.registry.set('ionBlast', {
+      active: false,
+      remainingMs: 0,
+      collectedCount: 0,
+      projectileCount: 1,
+      pickupActive: false,
+      pickupPosition: { x: 0, y: 0 },
+      poolActiveCount: 0,
+      totalSpawned: this.registry.get('ionBlast')?.totalSpawned ?? 0,
+      totalRecycled: this.registry.get('ionBlast')?.totalRecycled ?? 0,
+      maxPickups: this.registry.get('ionBlast')?.maxPickups ?? 0,
+    });
+    this.registry.set('boss', {
+      active: false,
+      health: 0,
+      maxHealth: 0,
+      phase: 1,
+      defeated: false,
+    });
     this.sound.stopByKey(ASSET_KEYS.AUDIO.MUSIC);
 
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, ASSET_KEYS.IMAGES.SPACE_BACKGROUND);

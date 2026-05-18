@@ -176,6 +176,26 @@ test.describe('Boss fight', () => {
     expect(bossHud.labelVisible).toBe(true);
     expect(bossHud.barVisible).toBe(true);
     expect(bossHud.barWidth).toBeLessThan(260);
+
+    // Regression: a single non-fatal hit must not recycle the boss sprite.
+    // Previously the overlap handler had the bullet/boss args swapped,
+    // causing the boss sprite to be recycled on first contact while the
+    // BossSystem still considered it alive.
+    const bossSprite = await page.evaluate(() => {
+      const game = (window as any).__PHASER_GAME__;
+      const scene = game.scene.getScene('GameScene') as any;
+      const boss = scene.bossSystem.getBoss();
+      return {
+        active: boss.active,
+        visible: boss.visible,
+        bodyEnabled: boss.body?.enable,
+      };
+    });
+    expect(bossSprite.active).toBe(true);
+    expect(bossSprite.visible).toBe(true);
+    expect(bossSprite.bodyEnabled).toBe(true);
+    expect(after.active).toBe(true);
+    expect(after.defeated).toBe(false);
   });
 
   test('M-003: boss advances through three phases with higher projectile pressure', async ({

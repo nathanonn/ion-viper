@@ -32,7 +32,7 @@ export const WAVE_CONFIGS: WaveConfig[] = [
     type: 'charger',
     typeSequence: ['charger', 'basic', 'shooter', 'charger', 'basic', 'charger', 'shooter', 'charger'],
     enemyCount: 8,
-    spawnDelayMs: 540,
+    spawnDelayMs: 400,
     enemySpeed: 180,
     scoreValue: 200,
   },
