@@ -7,3 +7,4 @@ goals/*/test-artifacts/
 .claude
 *.mp4
 *.webm
+scripts/
